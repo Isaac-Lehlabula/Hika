@@ -1,0 +1,69 @@
+name: hika
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hika-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hika}
+      POSTGRES_USER: ${POSTGRES_USER:-hika}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-locally}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - hika-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hika} -d ${POSTGRES_DB:-hika}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: hika-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hika-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-hika};Username=${POSTGRES_USER:-hika};Password=${POSTGRES_PASSWORD:-change-me-locally}
+      Jwt__SigningKey: ${Jwt__SigningKey:-REPLACE_WITH_A_LONG_RANDOM_SECRET_AT_LEAST_32_BYTES}
+      Jwt__Issuer: ${Jwt__Issuer:-hika-api}
+      Jwt__Audience: ${Jwt__Audience:-hika-client}
+      Smtp__Host: mailhog
+      Smtp__Port: 1025
+      Smtp__From: ${Smtp__From:-no-reply@hika.local}
+    ports:
+      - "${API_PORT:-5080}:8080"
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hika-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:5080}
+      API_INTERNAL_BASE_URL: http://api:8080
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+
+volumes:
+  hika-postgres-data:
