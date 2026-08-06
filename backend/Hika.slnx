@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Hika.Api/Hika.Api.csproj" />
+    <Project Path="src/Hika.Application/Hika.Application.csproj" />
+    <Project Path="src/Hika.Domain/Hika.Domain.csproj" />
+    <Project Path="src/Hika.Infrastructure/Hika.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Hika.IntegrationTests/Hika.IntegrationTests.csproj" />
+    <Project Path="tests/Hika.UnitTests/Hika.UnitTests.csproj" />
+  </Folder>
+</Solution>

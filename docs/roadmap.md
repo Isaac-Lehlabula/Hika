@@ -5,7 +5,7 @@ Each phase: explain → implement → automated tests → `dotnet build`/`dotnet
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Architecture & domain design docs (`/docs`) | ✅ Done |
-| 1 | Solution/infra scaffolding — projects, Serilog, health checks, OpenAPI, EF plumbing, CORS | 🔶 In progress |
+| 1 | Solution/infra scaffolding — projects, Serilog, health checks, OpenAPI, EF plumbing, CORS | ✅ Done |
 | 2 | Auth & users — registration, login, logout, email/phone verification, refresh tokens, password reset, profile; matching frontend screens | ⬜ Not started |
 | 3 | Driver profiles & vehicles — license info, vehicle CRUD, vehicle photos, verification submission | ⬜ Not started |
 | 4 | Trips, stops, segments — post a trip, intermediate stops, segment inventory creation | ⬜ Not started |
@@ -20,8 +20,8 @@ Each phase: explain → implement → automated tests → `dotnet build`/`dotnet
 
 ## What's runnable today
 
-This section is updated as each phase actually completes — see the status column above for ground truth.
+- Backend: `docker compose up -d postgres mailhog`, then `dotnet run --project backend/src/Hika.Api` — health checks (`/health/live`, `/health/ready`), Serilog structured logging, OpenAPI document + Scalar UI (`/scalar`) all verified working against a real Postgres container. No domain entities or business endpoints yet.
 
 ## Next up
 
-**Phase 1 — Solution/infra scaffolding**, currently in progress. Then **Phase 2 — Auth & users**, which builds directly on it. **Phase 3 — Driver profiles & vehicles** builds on Phase 2 (a `DriverProfile` is 1:1 with `ApplicationUser`) and is itself a prerequisite for Phase 4 (a `Trip` needs a driver + vehicle).
+**Phase 2 — Auth & users**, which builds directly on Phase 1's plumbing. **Phase 3 — Driver profiles & vehicles** builds on Phase 2 (a `DriverProfile` is 1:1 with `ApplicationUser`) and is itself a prerequisite for Phase 4 (a `Trip` needs a driver + vehicle).

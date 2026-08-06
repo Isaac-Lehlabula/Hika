@@ -1,0 +1,6 @@
+@Hika.Api_HostAddress = http://localhost:5144
+
+GET {{Hika.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
