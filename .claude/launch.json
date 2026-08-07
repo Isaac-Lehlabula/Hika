@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hika-mobile-web",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d mobile\\hika_app && flutter run -d web-server --web-port=7357 --web-hostname=localhost"
+      ],
+      "port": 7357
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d admin && npm run dev -- --port=3100"],
+      "port": 3100
+    }
+  ]
+}

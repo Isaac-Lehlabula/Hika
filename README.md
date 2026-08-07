@@ -4,7 +4,7 @@
 
 Hika is a South African long-distance carpooling platform built around the local concept of "hiking" — getting a lift with someone already travelling in your direction. It is not an on-demand ride-hailing app: drivers post trips they are already making (typically for holidays, long weekends, and other high-travel periods), and passengers reserve seats on those trips, including on partial segments of a longer route.
 
-The primary product is a **Flutter mobile app** (Android + iOS). A Next.js admin/operations portal is a separate, secondary application built later.
+The primary product is a **Flutter mobile app** (Android + iOS), with a Next.js admin/operations portal for internal staff.
 
 This is a working name and product in active development. See [`/docs`](docs/) for the full architecture, domain model, and roadmap.
 
@@ -13,7 +13,7 @@ This is a working name and product in active development. See [`/docs`](docs/) f
 ```
 backend/    ASP.NET Core (.NET 10) Web API — modular monolith
 mobile/     Flutter app (Android + iOS) — the primary customer-facing product
-admin/      Next.js admin/operations portal — built later, internal staff only
+admin/      Next.js admin/operations portal — internal staff only
 docs/       Architecture, domain model, API design, and roadmap docs
 docker-compose.yml   Local dev stack: Postgres, Mailhog, API
 ```
@@ -40,7 +40,10 @@ Then run the API — see [`backend/README.md`](backend/README.md).
 - Mailhog UI (dev email inbox): http://localhost:8025
 
 ### 3. Mobile app
-See [`mobile/README.md`](mobile/README.md) once the app is scaffolded — `flutter run` against an emulator/simulator/device, pointed at the local API.
+See [`mobile/README.md`](mobile/README.md) — `flutter run` against an emulator/simulator/device, pointed at the local API.
+
+### 4. Admin portal
+See [`admin/README.md`](admin/README.md) — `npm run dev`, pointed at the local API via `API_BASE_URL`.
 
 ## Documentation
 
