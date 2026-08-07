@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using Hika.Application.Users.Ports;
 using Hika.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -40,6 +41,8 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 ["Frontend:BaseUrl"] = "http://localhost:3000",
                 ["Smtp:Host"] = "unused-in-tests",
                 ["Smtp:From"] = "no-reply@hika.local",
+                ["LocalFileStorage:RootPath"] = Path.Combine(Path.GetTempPath(), "hika-integration-tests", Guid.NewGuid().ToString("N")),
+                ["LocalFileStorage:PublicBaseUrl"] = "http://localhost",
             });
         });
 
@@ -67,4 +70,40 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         await _postgres.DisposeAsync();
         await base.DisposeAsync();
     }
+
+    /// <summary>Registers, verifies, and logs in a fresh user — for tests of endpoints that
+    /// just need *some* authenticated caller, not the auth flow itself (see AuthEndpointsTests
+    /// for that).</summary>
+    public async Task<(HttpClient Client, Guid UserId, string AccessToken)> CreateAuthenticatedClientAsync(
+        [System.Runtime.CompilerServices.CallerMemberName] string testName = "")
+    {
+        var client = CreateClient();
+        var email = $"{testName.ToLowerInvariant()}-{Guid.NewGuid():N}@example.com";
+
+        var registerResponse = await client.PostAsJsonAsync("/api/v1/auth/register", new
+        {
+            email,
+            password = "Passw0rd123",
+            firstName = "Test",
+            lastName = "Driver",
+        });
+        registerResponse.EnsureSuccessStatusCode();
+        var userId = (await registerResponse.Content.ReadFromJsonAsync<RegisterResponse>())!.UserId;
+
+        var verificationEmail = EmailSender.SentEmails.Single(e => e.To == email);
+        var token = CapturingEmailSender.ExtractQueryParam(verificationEmail.Body, "token");
+        (await client.PostAsJsonAsync("/api/v1/auth/verify-email", new { userId, token })).EnsureSuccessStatusCode();
+
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new { email, password = "Passw0rd123" });
+        loginResponse.EnsureSuccessStatusCode();
+        var tokens = (await loginResponse.Content.ReadFromJsonAsync<TokenResponse>())!;
+
+        client.DefaultRequestHeaders.Authorization = new("Bearer", tokens.AccessToken);
+
+        return (client, userId, tokens.AccessToken);
+    }
+
+    private sealed record RegisterResponse(Guid UserId);
+
+    private sealed record TokenResponse(string AccessToken);
 }

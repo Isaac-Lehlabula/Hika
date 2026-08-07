@@ -4,8 +4,10 @@ using Hika.Application;
 using Hika.Infrastructure;
 using Hika.Infrastructure.Persistence;
 using Hika.Infrastructure.Security;
+using Hika.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -81,6 +83,8 @@ try
 
     builder.Services.AddAuthorization();
 
+    builder.Services.AddHttpContextAccessor();
+
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -111,6 +115,13 @@ try
     }
 
     app.UseHttpsRedirection();
+
+    // Served from the same resolved path LocalFileStorage writes to, at the web root (no
+    // "/uploads" prefix) — matches the URLs LocalFileStorage.SaveAsync returns.
+    var uploadsRootPath = LocalFileStorage.ResolveAbsoluteRootPath(
+        app.Services.GetRequiredService<IOptions<LocalFileStorageOptions>>().Value.RootPath, app.Environment);
+    Directory.CreateDirectory(uploadsRootPath);
+    app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(uploadsRootPath) });
 
     app.UseCors(CorsPolicyName);
 

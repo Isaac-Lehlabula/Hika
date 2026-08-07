@@ -71,6 +71,9 @@ Thumbs.db
 # =====================
 docker-data/
 
+# Local-disk file storage (dev/MVP only — see docs/south-africa.md upgrade path to cloud storage)
+backend/src/Hika.Api/uploads/
+
 # =====================
 # Logs
 # =====================

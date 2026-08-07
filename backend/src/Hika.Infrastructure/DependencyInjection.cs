@@ -1,12 +1,14 @@
 using Hika.Application.Common.Events;
 using Hika.Application.Common.Options;
 using Hika.Application.Common.Persistence;
+using Hika.Application.Common.Storage;
 using Hika.Application.Users.Ports;
 using Hika.Infrastructure.Common.Events;
 using Hika.Infrastructure.Identity;
 using Hika.Infrastructure.Notifications;
 using Hika.Infrastructure.Persistence;
 using Hika.Infrastructure.Security;
+using Hika.Infrastructure.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -72,10 +74,20 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddOptions<LocalFileStorageOptions>()
+            .Bind(configuration.GetSection(LocalFileStorageOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         services.AddScoped<IUserAccountService, UserAccountService>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddScoped<ISmsSender, LoggingSmsSender>();
+        services.AddScoped<IFileStorage, LocalFileStorage>();
+        // IHttpContextAccessor's concrete implementation lives in the full ASP.NET Core
+        // shared framework, which this plain class library doesn't reference — registered in
+        // Hika.Api's Program.cs (a Web SDK project) instead; this project only needs the
+        // interface, from Microsoft.AspNetCore.Http.Abstractions.
 
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 

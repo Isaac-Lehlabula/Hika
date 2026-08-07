@@ -1,4 +1,6 @@
 using Hika.Application.Common.Persistence;
+using Hika.Domain.Drivers;
+using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,9 +14,16 @@ namespace Hika.UnitTests.TestSupport;
 /// </summary>
 public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
 {
-    public InMemoryAppDbContext()
+    /// <param name="databaseName">
+    /// Defaults to a fresh unique database. Pass an explicit name shared across multiple
+    /// InMemoryAppDbContext instances to simulate separate request-scoped DbContexts reading
+    /// the same underlying data — e.g. testing a service method called twice "as if" by two
+    /// separate HTTP requests, which is how it actually runs in production (a fresh DbContext
+    /// per request) but not how a single reused instance behaves under the InMemory provider.
+    /// </param>
+    public InMemoryAppDbContext(string? databaseName = null)
         : base(new DbContextOptionsBuilder<InMemoryAppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName ?? Guid.NewGuid().ToString())
             .Options)
     {
     }
@@ -29,6 +38,12 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
 
     public DbSet<PhoneVerificationCode> PhoneVerificationCodes => Set<PhoneVerificationCode>();
 
+    public DbSet<DriverProfile> DriverProfiles => Set<DriverProfile>();
+
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+
+    public DbSet<Verification> Verifications => Set<Verification>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserProfile>().HasKey(p => p.Id);
@@ -36,5 +51,18 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
         modelBuilder.Entity<EmailVerificationToken>().HasKey(t => t.Id);
         modelBuilder.Entity<PasswordResetToken>().HasKey(t => t.Id);
         modelBuilder.Entity<PhoneVerificationCode>().HasKey(c => c.Id);
+
+        modelBuilder.Entity<DriverProfile>().HasKey(p => p.Id);
+
+        modelBuilder.Entity<Vehicle>(builder =>
+        {
+            builder.HasKey(v => v.Id);
+            builder.HasMany(v => v.Photos).WithOne().HasForeignKey(p => p.VehicleId);
+            builder.Navigation(v => v.Photos).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<VehiclePhoto>().HasKey(p => p.Id);
+
+        modelBuilder.Entity<Verification>().HasKey(v => v.Id);
     }
 }

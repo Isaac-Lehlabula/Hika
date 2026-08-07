@@ -2,6 +2,8 @@
 
 PostgreSQL 16. All tables use `uuid` primary keys, `timestamptz` for all timestamps (stored UTC, converted at the edges), `decimal(18,2)` for money. Naming: `snake_case` tables/columns (EF Core's default Npgsql convention via `UseSnakeCaseNamingConvention` or explicit configuration), PascalCase in C#.
 
+Every entity's `Id` is explicitly configured `ValueGenerated.Never` (set once, model-wide, in `AppDbContext.OnModelCreating` — not per-entity) since every key is client-generated (`Guid.CreateVersion7()`, see `Entity`). This isn't just documentation: without it, EF Core's Added-vs-Unchanged heuristic for an entity discovered via a collection navigation rather than an explicit `Add()` call (e.g. a new `VehiclePhoto` reached through `Vehicle.Photos`) assumes a non-default key means "already exists" and silently issues an `UPDATE` for a row that was never inserted — a real bug this project hit and fixed in Phase 3 (see `Vehicle`/`VehiclePhoto`).
+
 This document describes the schema conceptually; the EF Core migrations in `backend/src/Hika.Infrastructure/Migrations` are the authoritative source once Phase 2+ lands.
 
 ## Entity-relationship diagram (core domain)

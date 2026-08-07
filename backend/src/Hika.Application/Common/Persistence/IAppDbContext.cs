@@ -1,3 +1,5 @@
+using Hika.Domain.Drivers;
+using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +23,12 @@ public interface IAppDbContext
     DbSet<PasswordResetToken> PasswordResetTokens { get; }
 
     DbSet<PhoneVerificationCode> PhoneVerificationCodes { get; }
+
+    DbSet<DriverProfile> DriverProfiles { get; }
+
+    DbSet<Vehicle> Vehicles { get; }
+
+    DbSet<Verification> Verifications { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

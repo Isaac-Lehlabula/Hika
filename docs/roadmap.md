@@ -9,7 +9,7 @@ Each phase: explain → implement (backend + mobile together, from Phase 2 on) �
 | 0 | Architecture & domain design docs (`/docs`) | ✅ Done |
 | 1 | Backend solution/infra scaffolding — projects, Serilog, health checks, OpenAPI, EF plumbing, CORS | ✅ Done |
 | 2 | **Auth & users** — backend: registration, login, logout, email/phone verification, refresh tokens, password reset, profile. Mobile: Flutter scaffold (design system, networking, secure token storage), Register/Login/VerifyEmail/VerifyPhone/ForgotPassword/ResetPassword/Profile screens. | ✅ Done |
-| 3 | **Driver profiles & vehicles** — backend: driver profile, vehicle CRUD, verification submission. Mobile: "Become a driver" flow, vehicle management screens. | ⬜ Not started |
+| 3 | **Driver profiles & vehicles** — backend: driver profile, vehicle CRUD, verification submission. Mobile: "Become a driver" flow, vehicle management screens. | 🔶 Backend done, mobile in progress |
 | 4 | **Trips, stops, segments** — backend: post a trip, intermediate stops, segment inventory creation. Mobile: guided "post a trip" flow, trip detail screen. | ⬜ Not started |
 | 5 | **Search** — backend: Find a Hike query, filters/sorting, location autocomplete. Mobile: home screen search, results list with trip cards. | ⬜ Not started |
 | 6 | **Bookings & seat inventory** — backend: request/accept/decline, concurrency-safe reservation, cancellation. Mobile: reserve-seat flow, driver's incoming-requests screen. | ⬜ Not started |
