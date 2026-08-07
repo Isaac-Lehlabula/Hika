@@ -10,6 +10,8 @@ import '../../../../shared/widgets/hika_badge.dart';
 import '../../../../shared/widgets/hika_button.dart';
 import '../../../../shared/widgets/hika_card.dart';
 import '../../../profile/presentation/providers/profile_controller.dart';
+import '../../../trust_safety/presentation/providers/blocked_users_controller.dart';
+import '../../../trust_safety/presentation/widgets/report_sheet.dart';
 import '../../data/province.dart';
 import '../../data/trip.dart';
 import '../providers/my_trips_controller.dart';
@@ -26,6 +28,30 @@ class TripDetailScreen extends ConsumerStatefulWidget {
 
 class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
   bool _isCancelling = false;
+
+  Future<void> _reportDriver(Trip trip) async {
+    await ReportSheet.show(context, title: 'Report ${trip.driver.firstName}', reportedUserId: trip.driver.userId);
+  }
+
+  Future<void> _blockDriver(Trip trip) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Block ${trip.driver.firstName}?'),
+        content: const Text("You won't see their trips and they won't be able to book yours."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Block')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(blockedUsersControllerProvider.notifier).block(trip.driver.userId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${trip.driver.firstName} has been blocked.')));
+      }
+    }
+  }
 
   Future<void> _cancel() async {
     final confirmed = await showDialog<bool>(
@@ -62,9 +88,30 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
   Widget build(BuildContext context) {
     final tripAsync = ref.watch(tripDetailControllerProvider(widget.tripId));
     final userId = ref.watch(profileControllerProvider).value?.userId;
+    final trip = tripAsync.value;
+    final isOwner = trip != null && trip.driver.userId == userId;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Trip details')),
+      appBar: AppBar(
+        title: const Text('Trip details'),
+        actions: trip == null || isOwner
+            ? null
+            : [
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'report') {
+                      _reportDriver(trip);
+                    } else if (value == 'block') {
+                      _blockDriver(trip);
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(value: 'report', child: Text('Report driver')),
+                    PopupMenuItem(value: 'block', child: Text('Block driver')),
+                  ],
+                ),
+              ],
+      ),
       body: tripAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(

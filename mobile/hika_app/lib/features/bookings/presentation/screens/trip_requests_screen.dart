@@ -11,6 +11,8 @@ import '../../../../shared/widgets/hika_badge.dart';
 import '../../../../shared/widgets/hika_button.dart';
 import '../../../../shared/widgets/hika_card.dart';
 import '../../../../shared/widgets/hika_empty_state.dart';
+import '../../../trust_safety/presentation/providers/blocked_users_controller.dart';
+import '../../../trust_safety/presentation/widgets/report_sheet.dart';
 import '../../data/booking.dart';
 import '../providers/payment_controller.dart';
 import '../providers/trip_requests_controller.dart';
@@ -43,6 +45,36 @@ class _TripRequestsScreenState extends ConsumerState<TripRequestsScreen> {
     } finally {
       if (mounted) {
         setState(() => _respondingToBookingId = null);
+      }
+    }
+  }
+
+  Future<void> _reportPassenger(Booking booking) async {
+    await ReportSheet.show(
+      context,
+      title: 'Report ${booking.passenger.firstName}',
+      reportedUserId: booking.passenger.userId,
+    );
+  }
+
+  Future<void> _blockPassenger(Booking booking) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Block ${booking.passenger.firstName}?'),
+        content: const Text("They won't be able to book your trips and you won't see theirs."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Block')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(blockedUsersControllerProvider.notifier).block(booking.passenger.userId);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${booking.passenger.firstName} has been blocked.')));
       }
     }
   }
@@ -128,6 +160,8 @@ class _TripRequestsScreenState extends ConsumerState<TripRequestsScreen> {
                   onAccept: () => _respond(booking.id, accept: true),
                   onDecline: () => _respond(booking.id, accept: false),
                   onRefund: () => _refund(booking.id),
+                  onReport: () => _reportPassenger(booking),
+                  onBlock: () => _blockPassenger(booking),
                 );
               },
             ),
@@ -146,6 +180,8 @@ class _RequestCard extends StatelessWidget {
     required this.onAccept,
     required this.onDecline,
     required this.onRefund,
+    required this.onReport,
+    required this.onBlock,
   });
 
   final Booking booking;
@@ -154,6 +190,8 @@ class _RequestCard extends StatelessWidget {
   final VoidCallback onAccept;
   final VoidCallback onDecline;
   final VoidCallback onRefund;
+  final VoidCallback onReport;
+  final VoidCallback onBlock;
 
   @override
   Widget build(BuildContext context) {
@@ -188,6 +226,19 @@ class _RequestCard extends StatelessWidget {
                 ),
               ),
               booking.status.toTripStatusBadge(),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'report') {
+                    onReport();
+                  } else if (value == 'block') {
+                    onBlock();
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'report', child: Text('Report passenger')),
+                  PopupMenuItem(value: 'block', child: Text('Block passenger')),
+                ],
+              ),
             ],
           ),
           const Divider(height: HikaSpacing.xl),

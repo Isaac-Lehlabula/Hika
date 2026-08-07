@@ -24,6 +24,8 @@ import '../../features/shell/presentation/splash_screen.dart';
 import '../../features/trips/data/trip.dart';
 import '../../features/trips/presentation/screens/post_trip_screen.dart';
 import '../../features/trips/presentation/screens/trip_detail_screen.dart';
+import '../../features/trust_safety/presentation/screens/blocked_users_screen.dart';
+import '../../features/trust_safety/presentation/screens/emergency_contacts_screen.dart';
 
 const _authRoutes = {'/login', '/register', '/verify-email', '/forgot-password', '/reset-password'};
 
@@ -96,6 +98,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             UserReviewsScreen(userId: state.pathParameters['id']!, displayName: (state.extra as String?) ?? 'Their'),
       ),
       GoRoute(path: '/ride-alerts', builder: (context, state) => const MyRideAlertsScreen()),
+      GoRoute(path: '/blocked-users', builder: (context, state) => const BlockedUsersScreen()),
+      GoRoute(path: '/emergency-contacts', builder: (context, state) => const EmergencyContactsScreen()),
     ],
   );
 });

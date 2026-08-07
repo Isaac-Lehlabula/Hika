@@ -142,6 +142,27 @@ class _ProfileContent extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: HikaSpacing.xl),
+          HikaCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Safety', style: theme.textTheme.titleMedium),
+                const SizedBox(height: HikaSpacing.sm),
+                _SafetyRow(
+                  icon: Icons.contact_phone_outlined,
+                  label: 'Emergency contacts',
+                  onTap: () => context.push('/emergency-contacts'),
+                ),
+                const SizedBox(height: HikaSpacing.sm),
+                _SafetyRow(
+                  icon: Icons.block_outlined,
+                  label: 'Blocked users',
+                  onTap: () => context.push('/blocked-users'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: HikaSpacing.xl),
           HikaButton(
             label: 'Driving',
             icon: Icons.drive_eta_outlined,
@@ -154,6 +175,35 @@ class _ProfileContent extends ConsumerWidget {
             onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SafetyRow extends StatelessWidget {
+  const _SafetyRow({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(HikaRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: HikaSpacing.xxs),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: HikaColors.accent),
+            const SizedBox(width: HikaSpacing.sm),
+            Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+            Icon(Icons.chevron_right, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+          ],
+        ),
       ),
     );
   }
