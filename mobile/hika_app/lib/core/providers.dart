@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/data/auth_api.dart';
 import '../features/auth/presentation/providers/auth_controller.dart';
 import '../features/bookings/data/bookings_api.dart';
+import '../features/bookings/data/payments_api.dart';
 import '../features/drivers/data/drivers_api.dart';
 import '../features/profile/data/profile_api.dart';
 import '../features/search/data/search_api.dart';
@@ -32,3 +33,5 @@ final tripsApiProvider = Provider<TripsApi>((ref) => TripsApi(ref.watch(apiClien
 final searchApiProvider = Provider<SearchApi>((ref) => SearchApi(ref.watch(apiClientProvider)));
 
 final bookingsApiProvider = Provider<BookingsApi>((ref) => BookingsApi(ref.watch(apiClientProvider)));
+
+final paymentsApiProvider = Provider<PaymentsApi>((ref) => PaymentsApi(ref.watch(apiClientProvider)));

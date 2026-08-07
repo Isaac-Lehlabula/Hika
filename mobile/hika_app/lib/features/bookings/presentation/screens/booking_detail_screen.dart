@@ -12,6 +12,7 @@ import '../../../../shared/widgets/hika_card.dart';
 import '../../data/booking.dart';
 import '../providers/booking_detail_controller.dart';
 import '../providers/my_bookings_controller.dart';
+import '../providers/payment_controller.dart';
 
 class BookingDetailScreen extends ConsumerStatefulWidget {
   const BookingDetailScreen({required this.bookingId, super.key});
@@ -104,6 +105,10 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               _DriverCard(trip: booking.trip),
               const SizedBox(height: HikaSpacing.lg),
               _BookingDetailsCard(booking: booking),
+              if (booking.status != 'Pending') ...[
+                const SizedBox(height: HikaSpacing.lg),
+                _PaymentCard(bookingId: widget.bookingId),
+              ],
               if (booking.canCancel) ...[
                 const SizedBox(height: HikaSpacing.xl),
                 HikaButton(
@@ -204,6 +209,73 @@ class _BookingDetailsCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PaymentCard extends ConsumerWidget {
+  const _PaymentCard({required this.bookingId});
+
+  final String bookingId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final paymentAsync = ref.watch(paymentControllerProvider(bookingId));
+    final theme = Theme.of(context);
+
+    return paymentAsync.when(
+      loading: () => const HikaCard(
+        child: Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+      ),
+      error: (_, _) => HikaCard(
+        child: Row(
+          children: [
+            Text("Couldn't load payment details.", style: theme.textTheme.bodyMedium),
+            const Spacer(),
+            TextButton(
+              onPressed: () => ref.read(paymentControllerProvider(bookingId).notifier).refresh(),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+      data: (payment) {
+        if (payment == null) {
+          return const SizedBox.shrink();
+        }
+
+        return HikaCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Payment', style: theme.textTheme.titleMedium),
+                  _paymentStatusBadge(payment.status),
+                ],
+              ),
+              const SizedBox(height: HikaSpacing.md),
+              _Row(icon: Icons.payments_outlined, label: 'Fare', value: 'R${payment.amount.toStringAsFixed(2)}'),
+              const SizedBox(height: HikaSpacing.sm),
+              _Row(icon: Icons.percent, label: 'Platform fee', value: 'R${payment.platformFee.toStringAsFixed(2)}'),
+              const SizedBox(height: HikaSpacing.sm),
+              _Row(icon: Icons.account_balance_wallet_outlined, label: 'Driver payout', value: 'R${payment.driverPayoutAmount.toStringAsFixed(2)}'),
+              if (payment.providerReference != null) ...[
+                const SizedBox(height: HikaSpacing.sm),
+                _Row(icon: Icons.receipt_long_outlined, label: 'Reference', value: payment.providerReference!),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _paymentStatusBadge(String status) => switch (status) {
+    'Succeeded' => const HikaBadge(label: 'Paid', tone: HikaBadgeTone.success, icon: Icons.check_circle_rounded),
+    'Refunded' => const HikaBadge(label: 'Refunded', tone: HikaBadgeTone.neutral, icon: Icons.replay_rounded),
+    'Failed' => const HikaBadge(label: 'Failed', tone: HikaBadgeTone.danger, icon: Icons.error_outline_rounded),
+    _ => const HikaBadge(label: 'Pending', tone: HikaBadgeTone.warning, icon: Icons.hourglass_top_rounded),
+  };
 }
 
 class _Row extends StatelessWidget {

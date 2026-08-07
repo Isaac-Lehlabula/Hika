@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/networking/api_exception.dart';
+import '../../../../core/providers.dart';
 import '../../../../core/theme/hika_colors.dart';
 import '../../../../core/theme/hika_spacing.dart';
 import '../../../../shared/widgets/hika_badge.dart';
@@ -10,6 +12,7 @@ import '../../../../shared/widgets/hika_button.dart';
 import '../../../../shared/widgets/hika_card.dart';
 import '../../../../shared/widgets/hika_empty_state.dart';
 import '../../data/booking.dart';
+import '../providers/payment_controller.dart';
 import '../providers/trip_requests_controller.dart';
 
 class TripRequestsScreen extends ConsumerStatefulWidget {
@@ -23,6 +26,7 @@ class TripRequestsScreen extends ConsumerStatefulWidget {
 
 class _TripRequestsScreenState extends ConsumerState<TripRequestsScreen> {
   String? _respondingToBookingId;
+  String? _refundingBookingId;
 
   Future<void> _respond(String bookingId, {required bool accept}) async {
     setState(() => _respondingToBookingId = bookingId);
@@ -39,6 +43,48 @@ class _TripRequestsScreenState extends ConsumerState<TripRequestsScreen> {
     } finally {
       if (mounted) {
         setState(() => _respondingToBookingId = null);
+      }
+    }
+  }
+
+  Future<void> _refund(String bookingId) async {
+    final reasonController = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Refund this booking?'),
+        content: TextField(
+          controller: reasonController,
+          decoration: const InputDecoration(labelText: 'Reason', hintText: 'e.g. Trip no longer running'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, reasonController.text.trim()),
+            child: const Text('Refund'),
+          ),
+        ],
+      ),
+    );
+    if (reason == null || reason.isEmpty) {
+      return;
+    }
+
+    setState(() => _refundingBookingId = bookingId);
+    try {
+      await ref.read(paymentsApiProvider).refundPayment(bookingId, reason: reason);
+      ref.invalidate(paymentControllerProvider(bookingId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking refunded.')));
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _refundingBookingId = null);
       }
     }
   }
@@ -78,8 +124,10 @@ class _TripRequestsScreenState extends ConsumerState<TripRequestsScreen> {
                 return _RequestCard(
                   booking: booking,
                   isResponding: _respondingToBookingId == booking.id,
+                  isRefunding: _refundingBookingId == booking.id,
                   onAccept: () => _respond(booking.id, accept: true),
                   onDecline: () => _respond(booking.id, accept: false),
+                  onRefund: () => _refund(booking.id),
                 );
               },
             ),
@@ -91,18 +139,28 @@ class _TripRequestsScreenState extends ConsumerState<TripRequestsScreen> {
 }
 
 class _RequestCard extends StatelessWidget {
-  const _RequestCard({required this.booking, required this.isResponding, required this.onAccept, required this.onDecline});
+  const _RequestCard({
+    required this.booking,
+    required this.isResponding,
+    required this.isRefunding,
+    required this.onAccept,
+    required this.onDecline,
+    required this.onRefund,
+  });
 
   final Booking booking;
   final bool isResponding;
+  final bool isRefunding;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
+  final VoidCallback onRefund;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return HikaCard(
+      onTap: () => context.push('/bookings/${booking.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -162,6 +220,16 @@ class _RequestCard extends StatelessWidget {
                   child: HikaButton(label: 'Accept', isLoading: isResponding, onPressed: onAccept),
                 ),
               ],
+            ),
+          ],
+          if (booking.status == 'Confirmed') ...[
+            const SizedBox(height: HikaSpacing.md),
+            HikaButton(
+              label: 'Refund',
+              variant: HikaButtonVariant.secondary,
+              icon: Icons.replay_rounded,
+              isLoading: isRefunding,
+              onPressed: onRefund,
             ),
           ],
         ],
