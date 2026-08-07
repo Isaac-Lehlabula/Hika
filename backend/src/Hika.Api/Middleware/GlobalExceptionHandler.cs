@@ -21,6 +21,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
             ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
             ForbiddenException => (StatusCodes.Status403Forbidden, "Forbidden"),
+            UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
             AppValidationException => (StatusCodes.Status400BadRequest, "Validation Failed"),
             _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred"),
         };
@@ -53,7 +54,9 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
 
         problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
 
-        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+        // Serialize using the runtime type (not the compile-time `ProblemDetails` type) so
+        // ValidationProblemDetails.Errors is actually included in the response body.
+        await httpContext.Response.WriteAsJsonAsync(problemDetails, problemDetails.GetType(), cancellationToken);
 
         return true;
     }

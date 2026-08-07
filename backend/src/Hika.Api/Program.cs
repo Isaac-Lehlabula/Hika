@@ -1,8 +1,13 @@
+using System.Text;
 using Hika.Api.Middleware;
 using Hika.Application;
 using Hika.Infrastructure;
 using Hika.Infrastructure.Persistence;
+using Hika.Infrastructure.Security;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -41,9 +46,39 @@ try
 
     builder.Services.AddOpenApi();
 
-    // Authentication scheme (JWT Bearer) is configured in Phase 2 alongside the Users module;
-    // this plumbing is registered now so the middleware pipeline below is valid immediately.
-    builder.Services.AddAuthentication();
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer();
+
+    // Configured via the options pipeline (resolving IOptions<JwtOptions> lazily through DI)
+    // rather than reading IConfiguration directly in top-level code. That distinction matters:
+    // top-level code here runs against `builder.Configuration` *before* WebApplicationFactory
+    // (used by integration tests) has merged its configuration overrides in, which would
+    // otherwise sign tokens with one key and validate them with another. Resolving lazily
+    // guarantees this always sees the same fully-finalized configuration JwtTokenGenerator does.
+    builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+        .Configure<IOptions<JwtOptions>>((bearerOptions, jwtOptions) =>
+        {
+            var jwt = jwtOptions.Value;
+
+            // Without this, ASP.NET Core remaps well-known JWT claim names (e.g. "sub" ->
+            // ClaimTypes.NameIdentifier) on the way in, which would silently break any code
+            // (ours included) that reads claims by their original JWT registered name.
+            bearerOptions.MapInboundClaims = false;
+
+            bearerOptions.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = jwt.Issuer,
+                ValidateAudience = true,
+                ValidAudience = jwt.Audience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey)),
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromSeconds(30),
+            };
+        });
+
     builder.Services.AddAuthorization();
 
     builder.Services.AddApplication();
@@ -53,12 +88,19 @@ try
         .AddHealthChecks()
         .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(), tags: ["live"])
         .AddNpgSql(
-            builder.Configuration.GetConnectionString("Default")
+            // Resolved lazily per-check from IServiceProvider (not read eagerly here) for the
+            // same reason as AddInfrastructure's DbContext registration — see the comment there.
+            sp => sp.GetRequiredService<IConfiguration>().GetConnectionString("Default")
                 ?? throw new InvalidOperationException("Missing required configuration: ConnectionStrings:Default"),
             name: "postgres",
             tags: ["ready"]);
 
     var app = builder.Build();
+
+    // Request logging goes outermost so its completion log reflects the *final* status code
+    // that UseExceptionHandler resolves an exception to, instead of logging its own separate
+    // "unhandled exception" entry on the way through.
+    app.UseSerilogRequestLogging();
 
     app.UseExceptionHandler();
 
@@ -67,8 +109,6 @@ try
         app.MapOpenApi();
         app.MapScalarApiReference();
     }
-
-    app.UseSerilogRequestLogging();
 
     app.UseHttpsRedirection();
 
