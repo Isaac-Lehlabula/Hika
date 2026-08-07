@@ -1,5 +1,6 @@
 using FluentValidation;
 using Hika.Application.Drivers;
+using Hika.Application.Search;
 using Hika.Application.Trips;
 using Hika.Application.Users;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,7 @@ public static class DependencyInjection
         services.AddScoped<IDriverProfileService, DriverProfileService>();
         services.AddScoped<IVehicleService, VehicleService>();
         services.AddScoped<ITripService, TripService>();
+        services.AddScoped<ISearchService, SearchService>();
 
         return services;
     }

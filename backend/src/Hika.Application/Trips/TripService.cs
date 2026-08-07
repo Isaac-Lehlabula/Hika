@@ -37,7 +37,7 @@ public sealed class TripService(IAppDbContext db) : ITripService
         var trip = Trip.Create(
             driverUserId,
             request.VehicleId,
-            request.DepartureAtUtc,
+            request.DepartureAtUtc.ToUniversalTime(),
             request.TotalSeatsOffered,
             new Money(request.PricePerSeat),
             request.LuggageAllowance,
