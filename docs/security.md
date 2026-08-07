@@ -7,6 +7,7 @@
 - Refresh tokens: opaque random values, **stored hashed** (SHA-256) — a DB leak doesn't hand out usable tokens. Rotated on every use; reuse of an already-rotated token revokes the entire token family (classic theft-detection pattern) and is logged as a security event.
 - Lockout: ASP.NET Core Identity's built-in lockout (configurable failed-attempt threshold + cool-down) on login and OTP verification.
 - Email/phone verification and password-reset tokens are all hashed at rest and expire quickly (verification links: 24h; OTP codes: 10 min; password reset: 1h).
+- **Client-side token storage**: the Flutter app stores access/refresh tokens in OS-backed secure storage (Android Keystore / iOS Keychain via `flutter_secure_storage`) — never plain preferences/local files. See `mobile-architecture.md` §5. The future Next.js admin portal, being a browser app, would instead use httpOnly/`Secure`/`SameSite` cookies via a thin server-side proxy (the BFF pattern) rather than `localStorage`, since a browser's threat model (XSS) differs from a native app's (device/storage compromise) — see `admin-portal.md`.
 
 ## Authorization
 

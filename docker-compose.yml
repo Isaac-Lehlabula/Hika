@@ -48,22 +48,13 @@ services:
       Smtp__Host: mailhog
       Smtp__Port: 1025
       Smtp__From: ${Smtp__From:-no-reply@hika.local}
+      Frontend__BaseUrl: ${Frontend__BaseUrl:-http://localhost:3000}
     ports:
       - "${API_PORT:-5080}:8080"
 
-  web:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: hika-web
-    restart: unless-stopped
-    depends_on:
-      - api
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:5080}
-      API_INTERNAL_BASE_URL: http://api:8080
-    ports:
-      - "${WEB_PORT:-3000}:3000"
+# The Flutter mobile app (mobile/) is not containerized — it runs on a device/emulator/
+# simulator via `flutter run`, pointed at this API. The future admin portal (admin/) gets
+# its own service here once it exists (see docs/admin-portal.md).
 
 volumes:
   hika-postgres-data:

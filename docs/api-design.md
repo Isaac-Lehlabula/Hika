@@ -34,6 +34,8 @@ REST over HTTPS, JSON, versioned via URL prefix (`/api/v1/...`) from day one so 
 | `POST /me/photo` | Upload profile photo. |
 | `GET /{userId}` | Public profile (name, photo, rating, completed trips, member-since, verification badges — no phone/email). |
 | `GET /me/emergency-contacts`, `POST/PUT/DELETE /me/emergency-contacts/{id}` | Emergency contacts (Trust & Safety). |
+| `POST /me/devices` | Register a push-notification device token (called on login and on FCM token rotation). |
+| `DELETE /me/devices/{deviceId}` | Deregister a device (called on logout). |
 
 ## Drivers & vehicles (`/api/v1/drivers`)
 
@@ -131,6 +133,16 @@ REST over HTTPS, JSON, versioned via URL prefix (`/api/v1/...`) from day one so 
 - `VerifiedDriver` — required to post a trip (driver profile + at least one verified vehicle).
 - `Admin` — staff-only endpoints, itself split into finer policies later if the admin team grows past "trusted small group" (e.g. read-only support staff vs. staff who can issue refunds).
 
-## Mobile-readiness
+## Mobile design (the Flutter app is the primary consumer)
 
-Nothing above is web-specific: no server-rendered HTML, no session-cookie-only auth (the JWT/refresh model works for a native client directly; only the *web* app additionally wraps it in httpOnly cookies via its own BFF layer — see `frontend-architecture.md`). A future React Native or native iOS/Android client is simply another OpenAPI-generated consumer of this same surface.
+Nothing above is web-specific — no server-rendered HTML, no cookie-only auth. The JWT/refresh model is designed to be used directly by a native client (see `mobile-architecture.md` §4–5 for how the app stores and refreshes tokens). Specifics that matter because the primary client is mobile, on South African mobile data:
+
+- **Small, purposeful payloads.** List/search DTOs return only what a card/row needs (e.g. search results carry a driver's name/photo/rating/verification badge, not their full profile); detail screens fetch the fuller payload on navigation. No endpoint returns a full entity graph "just in case."
+- **Image uploads** (profile photo, vehicle photos, verification documents) are multipart uploads against dedicated endpoints (`POST /users/me/photo`, `POST /drivers/me/vehicles/{id}/photos`, ...) that return a URL, not base64-encoded blobs embedded in JSON — keeps request bodies small and lets the mobile client show upload progress. Server-side, uploads are size-capped and re-encoded/compressed before storage.
+- **Device registration & push tokens**: `POST /users/me/devices` registers a device's push token (FCM) against the authenticated user, called on login and on token refresh (FCM tokens rotate); `DELETE /users/me/devices/{deviceId}` on logout. This backs the `Notification` push channel (see `domain-model.md` §8) — one user can have multiple registered devices.
+- **Idempotency**: booking creation and payment initiation accept an `Idempotency-Key` header (client-generated UUID, retried with the same key on a timed-out request) so a flaky mobile connection retrying a POST can't create a duplicate booking or double-charge — the server returns the original result for a repeated key instead of reprocessing.
+- **Retry-friendly errors**: `ProblemDetails` responses distinguish retryable failures (5xx, 408, 429) from non-retryable ones (4xx other than 408/429) via standard HTTP status semantics, so the mobile client's retry policy can be a simple, generic rule rather than per-endpoint special-casing.
+- **API versioning**: URL-prefixed (`/api/v1/...`) from day one specifically because a mobile client can't be force-refreshed the way a web page can — old app versions may keep calling `v1` for months after `v2` ships, so breaking changes get a new version prefix rather than mutating `v1`'s contract.
+- **Optimistic UI support**: endpoints that the app will optimistically update client-side before the server confirms (e.g. marking a notification read) return the updated resource so the client can reconcile if its optimistic guess was wrong.
+
+A future admin portal (Next.js, see `admin-portal.md`) or a second mobile platform is simply another OpenAPI-generated consumer of this same surface — none of the above is Flutter-specific in how the API is shaped, only in *why* these choices were prioritized.

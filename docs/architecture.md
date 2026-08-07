@@ -4,20 +4,24 @@
 
 Hika is **not** an on-demand ride-hailing app. A driver who is already making a trip posts it with available seats; passengers discover trips going their way and reserve seats — potentially for only part of the driver's route. This distinction shapes the domain model more than anything else: the core hard problem is not "match a driver to a passenger" (Uber's problem) but "track seat inventory across the sub-segments of a single journey" (closer to airline/bus segment inventory).
 
+The **primary customer-facing product is a Flutter mobile app** (Android + iOS) — most South African users will reach Hika from a phone, and the product should feel like a native consumer app, not a mobile-rendered website. A Next.js **admin/operations portal** (internal staff only — verification review, dispute handling, analytics) is a separate, secondary application built later, once the mobile app's core flows work end-to-end. See [`mobile-architecture.md`](mobile-architecture.md) for the Flutter app's design.
+
 ## 2. High-level system
 
 ```
-┌─────────────────┐      REST + OpenAPI       ┌──────────────────────┐
-│  Next.js web app │ ───────────────────────▶ │  ASP.NET Core Web API │
-│  (frontend/)      │ ◀─────────────────────── │  (backend/)            │
-└─────────────────┘                            └──────────┬───────────┘
-                                                            │ EF Core
-                                                            ▼
-                                                  ┌───────────────────┐
-                                                  │   PostgreSQL 16    │
-                                                  └───────────────────┘
-        Future: native mobile app talks to the same REST API — the API
-        is not aware of "web" as a concept, so this requires no backend redesign.
+┌────────────────────┐
+│ Flutter mobile app  │──┐
+│ (mobile/)           │  │  REST + OpenAPI      ┌───────────────────────┐      ┌─────────────────┐
+│ Android + iOS       │  ├──────────────────────▶│  ASP.NET Core Web API │─────▶│  PostgreSQL 16   │
+└────────────────────┘  │  ◀──────────────────────│  (backend/)           │      └─────────────────┘
+                         │                        └───────────────────────┘
+┌────────────────────┐  │
+│ Next.js admin portal│──┘
+│ (admin/, later)     │
+└────────────────────┘
+
+Both clients speak the same REST+OpenAPI surface — the API has no notion of "web" vs "mobile",
+so adding the admin portal later, or a second mobile platform, requires no backend redesign.
 ```
 
 The backend is a **modular monolith**: one deployable ASP.NET Core process, internally organized into modules (Users, Drivers, Trips, Bookings, Payments, Reviews, Notifications, Trust & Safety, Admin) with disciplined boundaries between them. This is deliberately *not* microservices — at MVP scale, network-hop overhead, distributed transactions, and operational complexity would cost far more than they'd return. The module boundaries are drawn so that any module could be extracted into its own service later if it ever needs independent scaling or deployment, without a full redesign.
@@ -84,10 +88,14 @@ MediatR and AutoMapper (both maintained by the same author/organization) moved t
 
 Configuration follows standard ASP.NET Core layering: `appsettings.json` (safe defaults/non-secrets) → `appsettings.{Environment}.json` → environment variables (used in Docker/Compose and in any future cloud deployment) → user-secrets for local dev (`dotnet user-secrets`, never committed). Nothing secret (JWT signing key, DB password, future payment gateway keys) is ever committed; `.env.example` documents the variable names without values. This same layering is what a future cloud deployment (Azure App Service/Container Apps, AWS, etc.) would plug into via its own secret store — no code change needed, only where the values come from.
 
-## 10. Frontend
+## 10. Clients
 
-See [`frontend-architecture.md`](frontend-architecture.md) for the full rationale. In short: Next.js (App Router) + TypeScript + Tailwind CSS + shadcn/ui, talking to the same public REST API a future mobile app would use.
+**Mobile app (primary, `mobile/`)**: Flutter + Dart, Android and iOS from one codebase. See [`mobile-architecture.md`](mobile-architecture.md) for the full rationale (state management choice, feature-based structure, design system, offline/connectivity considerations relevant to SA users).
+
+**Admin portal (secondary, `admin/`, built later)**: Next.js + TypeScript, internal-only (staff verification review, dispute handling, platform analytics). Deliberately not prioritized before the mobile app's core flows work — it talks to the same REST API, just with `Admin`-policy-gated endpoints (see `api-design.md`).
+
+Both are ordinary REST+OpenAPI clients — the API itself has no concept of "web" or "mobile," so neither client shapes the backend's design.
 
 ## 11. Deployment posture (for later, not MVP)
 
-Both `backend/Dockerfile` and `frontend/Dockerfile` build production images; `docker-compose.yml` is for local development (and would work as a simple single-VM deployment in a pinch). The explicit non-goal for now is Kubernetes or a service mesh — the modular-monolith boundaries mean that path is available later if one module's load genuinely outgrows the rest, without having designed the domain model around it prematurely.
+`backend/Dockerfile` builds the API's production image; `docker-compose.yml` covers local development (Postgres + Mailhog + the API — the Flutter app runs on a device/simulator/emulator, not in Compose; the admin portal gets its own Dockerfile once it exists). The explicit non-goal for now is Kubernetes or a service mesh — the modular-monolith boundaries mean that path is available later if one module's load genuinely outgrows the rest, without having designed the domain model around it prematurely.
