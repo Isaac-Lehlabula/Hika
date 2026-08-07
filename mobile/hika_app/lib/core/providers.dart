@@ -5,8 +5,10 @@ import '../features/auth/presentation/providers/auth_controller.dart';
 import '../features/bookings/data/bookings_api.dart';
 import '../features/bookings/data/payments_api.dart';
 import '../features/drivers/data/drivers_api.dart';
+import '../features/notifications/data/notifications_api.dart';
 import '../features/profile/data/profile_api.dart';
 import '../features/reviews/data/reviews_api.dart';
+import '../features/ride_alerts/data/ride_alerts_api.dart';
 import '../features/search/data/search_api.dart';
 import '../features/trips/data/trips_api.dart';
 import 'networking/api_client.dart';
@@ -38,3 +40,7 @@ final bookingsApiProvider = Provider<BookingsApi>((ref) => BookingsApi(ref.watch
 final paymentsApiProvider = Provider<PaymentsApi>((ref) => PaymentsApi(ref.watch(apiClientProvider)));
 
 final reviewsApiProvider = Provider<ReviewsApi>((ref) => ReviewsApi(ref.watch(apiClientProvider)));
+
+final notificationsApiProvider = Provider<NotificationsApi>((ref) => NotificationsApi(ref.watch(apiClientProvider)));
+
+final rideAlertsApiProvider = Provider<RideAlertsApi>((ref) => RideAlertsApi(ref.watch(apiClientProvider)));

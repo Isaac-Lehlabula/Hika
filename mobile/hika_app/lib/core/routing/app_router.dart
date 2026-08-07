@@ -16,6 +16,7 @@ import '../../features/drivers/presentation/screens/become_driver_screen.dart';
 import '../../features/drivers/presentation/screens/vehicle_detail_screen.dart';
 import '../../features/drivers/presentation/screens/vehicles_screen.dart';
 import '../../features/reviews/presentation/screens/user_reviews_screen.dart';
+import '../../features/ride_alerts/presentation/screens/my_ride_alerts_screen.dart';
 import '../../features/search/data/search_models.dart';
 import '../../features/search/presentation/screens/search_results_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
@@ -94,6 +95,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             UserReviewsScreen(userId: state.pathParameters['id']!, displayName: (state.extra as String?) ?? 'Their'),
       ),
+      GoRoute(path: '/ride-alerts', builder: (context, state) => const MyRideAlertsScreen()),
     ],
   );
 });

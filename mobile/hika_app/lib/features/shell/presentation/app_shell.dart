@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/hika_empty_state.dart';
 import '../../bookings/presentation/screens/my_bookings_screen.dart';
 import '../../home/presentation/screens/home_screen.dart';
+import '../../notifications/presentation/screens/inbox_screen.dart';
 import '../../profile/presentation/screens/profile_screen.dart';
 import '../../trips/presentation/screens/my_trips_screen.dart';
 
 /// Bottom-nav shell: Home, Trips, Bookings, Inbox, Profile — five tabs per
-/// the product brief's "don't create too many tabs" guidance. Trips shows
-/// posted trips and Bookings shows requested/booked seats now that both
-/// exist; Inbox stays a honest "coming soon" state (see docs/roadmap.md)
-/// until notifications land.
+/// the product brief's "don't create too many tabs" guidance. All five are
+/// now real, backend-wired screens.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -35,11 +33,7 @@ class _AppShellState extends State<AppShell> {
       const HomeScreen(),
       const MyTripsScreen(),
       const MyBookingsScreen(),
-      const _ComingSoonTab(
-        icon: Icons.mail_outline_rounded,
-        title: 'Inbox',
-        message: 'Booking updates and messages will show up here once notifications are live.',
-      ),
+      const InboxScreen(),
       const ProfileScreen(),
     ];
 
@@ -67,20 +61,4 @@ class _Tab {
   final IconData icon;
   final IconData selectedIcon;
   final String label;
-}
-
-class _ComingSoonTab extends StatelessWidget {
-  const _ComingSoonTab({required this.icon, required this.title, required this.message});
-
-  final IconData icon;
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: HikaEmptyState(icon: icon, title: 'Coming soon', message: message),
-    );
-  }
 }
