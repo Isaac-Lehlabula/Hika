@@ -61,6 +61,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<RideAlert> RideAlerts => Set<RideAlert>();
 
+    public DbSet<Report> Reports => Set<Report>();
+
+    public DbSet<Block> Blocks => Set<Block>();
+
+    public DbSet<EmergencyContact> EmergencyContacts => Set<EmergencyContact>();
+
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken) =>
         Database.BeginTransactionAsync(cancellationToken);
 

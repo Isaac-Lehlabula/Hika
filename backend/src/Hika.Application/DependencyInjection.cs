@@ -7,6 +7,7 @@ using Hika.Application.Reviews;
 using Hika.Application.RideAlerts;
 using Hika.Application.Search;
 using Hika.Application.Trips;
+using Hika.Application.TrustSafety;
 using Hika.Application.Users;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -30,6 +31,9 @@ public static class DependencyInjection
         services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IRideAlertService, RideAlertService>();
+        services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IBlockService, BlockService>();
+        services.AddScoped<IEmergencyContactService, EmergencyContactService>();
 
         return services;
     }

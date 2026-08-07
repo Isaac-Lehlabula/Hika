@@ -61,6 +61,12 @@ public interface IAppDbContext
 
     DbSet<RideAlert> RideAlerts { get; }
 
+    DbSet<Report> Reports { get; }
+
+    DbSet<Block> Blocks { get; }
+
+    DbSet<EmergencyContact> EmergencyContacts { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 
     /// <summary>

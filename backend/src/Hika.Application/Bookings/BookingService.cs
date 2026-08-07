@@ -29,6 +29,16 @@ public sealed class BookingService(IAppDbContext db, IPaymentService paymentServ
             throw new AppValidationException("tripId", "You can't book your own trip.");
         }
 
+        // One-directional Block rows still block booking both ways — see Block.cs.
+        var isBlocked = await db.Blocks.AnyAsync(
+            b => (b.BlockerUserId == passengerUserId && b.BlockedUserId == trip.DriverProfileId)
+                || (b.BlockerUserId == trip.DriverProfileId && b.BlockedUserId == passengerUserId),
+            cancellationToken);
+        if (isBlocked)
+        {
+            throw new ForbiddenException("You can't book this trip.");
+        }
+
         var boardingStop = trip.Stops.FirstOrDefault(s => s.Sequence == request.BoardingStopSequence)
             ?? throw new AppValidationException("boardingStopSequence", "That boarding stop doesn't exist on this trip.");
         var alightingStop = trip.Stops.FirstOrDefault(s => s.Sequence == request.AlightingStopSequence)

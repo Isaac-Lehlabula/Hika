@@ -77,6 +77,12 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
 
     public DbSet<RideAlert> RideAlerts => Set<RideAlert>();
 
+    public DbSet<Report> Reports => Set<Report>();
+
+    public DbSet<Block> Blocks => Set<Block>();
+
+    public DbSet<EmergencyContact> EmergencyContacts => Set<EmergencyContact>();
+
     // The InMemory provider doesn't support transactions or raw SQL — BookingService.RequestAsync,
     // which needs both for the advisory-locked reservation, is covered by the Postgres
     // integration tests instead. These exist only so InMemoryAppDbContext satisfies
@@ -160,6 +166,12 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
         modelBuilder.Entity<Notification>().HasKey(n => n.Id);
 
         modelBuilder.Entity<RideAlert>().HasKey(a => a.Id);
+
+        modelBuilder.Entity<Report>().HasKey(r => r.Id);
+
+        modelBuilder.Entity<Block>().HasKey(b => b.Id);
+
+        modelBuilder.Entity<EmergencyContact>().HasKey(c => c.Id);
 
         // Same client-generated-key convention as production — see AppDbContext for why.
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
