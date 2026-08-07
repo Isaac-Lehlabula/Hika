@@ -3,6 +3,7 @@ using Hika.Domain.Bookings;
 using Hika.Domain.Common;
 using Hika.Domain.Drivers;
 using Hika.Domain.Payments;
+using Hika.Domain.Reviews;
 using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
@@ -67,6 +68,8 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
     public DbSet<Payment> Payments => Set<Payment>();
 
     public DbSet<Refund> Refunds => Set<Refund>();
+
+    public DbSet<Review> Reviews => Set<Review>();
 
     // The InMemory provider doesn't support transactions or raw SQL — BookingService.RequestAsync,
     // which needs both for the advisory-locked reservation, is covered by the Postgres
@@ -145,6 +148,8 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
             builder.HasKey(r => r.Id);
             builder.ComplexProperty(r => r.Amount);
         });
+
+        modelBuilder.Entity<Review>().HasKey(r => r.Id);
 
         // Same client-generated-key convention as production — see AppDbContext for why.
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
