@@ -19,6 +19,7 @@ public sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProf
         builder.Property(p => p.PhotoUrl).HasMaxLength(2048);
         builder.Property(p => p.PhoneNumber).HasMaxLength(20);
         builder.Property(p => p.AverageRating).HasColumnType("decimal(3,2)");
+        builder.Property(p => p.SuspensionReason).HasMaxLength(500);
 
         builder.HasIndex(p => p.PhoneNumber)
             .IsUnique()

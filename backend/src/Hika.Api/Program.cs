@@ -1,12 +1,15 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using Hika.Api.Authorization;
 using Hika.Api.Middleware;
 using Hika.Application;
+using Hika.Application.Users.Ports;
 using Hika.Infrastructure;
 using Hika.Infrastructure.Persistence;
 using Hika.Infrastructure.Security;
 using Hika.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
@@ -83,7 +86,11 @@ try
             };
         });
 
-    builder.Services.AddAuthorization();
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("Admin", policy => policy.AddRequirements(new AdminRequirement()));
+    });
+    builder.Services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
 
     builder.Services.AddHttpContextAccessor();
 
@@ -151,6 +158,27 @@ try
         {
             db.Locations.AddRange(LocationSeedData.Build());
             await db.SaveChangesAsync();
+        }
+
+        // Dev-only bootstrap for the admin portal: no self-service "become an admin" endpoint
+        // exists (see UserProfile.GrantAdmin's remarks — a trusted-small-group admin is
+        // promoted out-of-band, never via the API). Set Admin:BootstrapEmail to an already-
+        // registered account's email and restart the API to grant it; unset/blank is a no-op.
+        var bootstrapEmail = app.Configuration["Admin:BootstrapEmail"];
+        if (!string.IsNullOrWhiteSpace(bootstrapEmail))
+        {
+            var userAccounts = scope.ServiceProvider.GetRequiredService<IUserAccountService>();
+            var account = await userAccounts.FindByEmailAsync(bootstrapEmail, CancellationToken.None);
+            var profile = account is null
+                ? null
+                : await db.UserProfiles.FirstOrDefaultAsync(p => p.Id == account.UserId);
+
+            if (profile is not null && !profile.IsAdmin)
+            {
+                profile.GrantAdmin();
+                await db.SaveChangesAsync();
+                Log.Information("Granted admin access to {Email} via Admin:BootstrapEmail", bootstrapEmail);
+            }
         }
     }
 

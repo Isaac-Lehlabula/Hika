@@ -12,7 +12,9 @@ public interface IPaymentService
 
     Task<PaymentResponse> GetForBookingAsync(Guid callerId, Guid bookingId, CancellationToken cancellationToken);
 
-    /// <summary>Driver-initiated for MVP — see docs/api-design.md's "policy-gated" note;
-    /// full admin/policy gating lands with the admin portal (Phase 11).</summary>
     Task<PaymentResponse> RefundAsync(Guid driverUserId, Guid bookingId, string reason, CancellationToken cancellationToken);
+
+    /// <summary>Admin-initiated refund — no driver-ownership check, see docs/api-design.md's
+    /// Admin financial-oversight section.</summary>
+    Task<PaymentResponse> AdminRefundAsync(Guid bookingId, string reason, CancellationToken cancellationToken);
 }

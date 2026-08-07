@@ -28,6 +28,14 @@ public sealed class UserProfile : Entity
 
     public int CompletedTripCount { get; private set; }
 
+    public bool IsAdmin { get; private set; }
+
+    public bool IsSuspended { get; private set; }
+
+    public DateTimeOffset? SuspendedAtUtc { get; private set; }
+
+    public string? SuspensionReason { get; private set; }
+
     private UserProfile(Guid userId, string firstName, string lastName)
     {
         Id = userId;
@@ -76,5 +84,40 @@ public sealed class UserProfile : Entity
         var totalRatingPoints = (AverageRating ?? 0m) * CompletedTripCount;
         CompletedTripCount++;
         AverageRating = decimal.Round((totalRatingPoints + newRating) / CompletedTripCount, 2);
+    }
+
+    /// <summary>Reverses RecordCompletedTripReview — used when an admin deletes a review
+    /// (moderation), so the aggregate stays consistent with the reviews that remain.</summary>
+    public void RemoveCompletedTripReview(decimal rating)
+    {
+        if (CompletedTripCount <= 1)
+        {
+            CompletedTripCount = 0;
+            AverageRating = null;
+            return;
+        }
+
+        var totalRatingPoints = (AverageRating ?? 0m) * CompletedTripCount;
+        CompletedTripCount--;
+        AverageRating = decimal.Round((totalRatingPoints - rating) / CompletedTripCount, 2);
+    }
+
+    /// <summary>Not exposed via any API — a trusted-small-group admin is bootstrapped
+    /// directly (see Program.cs's dev-only Admin:BootstrapEmail step), never self-service,
+    /// to avoid a privilege-escalation endpoint. See docs/admin-portal.md.</summary>
+    public void GrantAdmin() => IsAdmin = true;
+
+    public void Suspend(string reason)
+    {
+        IsSuspended = true;
+        SuspendedAtUtc = DateTimeOffset.UtcNow;
+        SuspensionReason = reason;
+    }
+
+    public void Unsuspend()
+    {
+        IsSuspended = false;
+        SuspendedAtUtc = null;
+        SuspensionReason = null;
     }
 }

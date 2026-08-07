@@ -1,4 +1,5 @@
 using FluentValidation;
+using Hika.Application.Admin;
 using Hika.Application.Bookings;
 using Hika.Application.Drivers;
 using Hika.Application.Notifications;
@@ -34,6 +35,18 @@ public static class DependencyInjection
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IBlockService, BlockService>();
         services.AddScoped<IEmergencyContactService, EmergencyContactService>();
+
+        services.AddScoped<IAuditLogger, AuditLogger>();
+        services.AddScoped<IAdminUserService, AdminUserService>();
+        services.AddScoped<IAdminVerificationService, AdminVerificationService>();
+        services.AddScoped<IAdminTripService, AdminTripService>();
+        services.AddScoped<IAdminBookingService, AdminBookingService>();
+        services.AddScoped<IAdminPaymentService, AdminPaymentService>();
+        services.AddScoped<IAdminReportService, AdminReportService>();
+        services.AddScoped<IAdminReviewService, AdminReviewService>();
+        services.AddScoped<IAdminPlatformFeeService, AdminPlatformFeeService>();
+        services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
+        services.AddScoped<IAdminAuditLogService, AdminAuditLogService>();
 
         return services;
     }

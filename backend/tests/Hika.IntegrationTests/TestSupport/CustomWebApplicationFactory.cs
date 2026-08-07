@@ -103,6 +103,19 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         return (client, userId, tokens.AccessToken);
     }
 
+    /// <summary>Grants admin access directly via the database — there is deliberately no HTTP
+    /// endpoint for this (see UserProfile.GrantAdmin's remarks), so tests of Admin-policy-gated
+    /// endpoints promote their caller this way, mirroring how Program.cs's dev-only
+    /// Admin:BootstrapEmail step does it in a real environment.</summary>
+    public async Task PromoteToAdminAsync(Guid userId)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var profile = await db.UserProfiles.SingleAsync(p => p.Id == userId);
+        profile.GrantAdmin();
+        await db.SaveChangesAsync();
+    }
+
     private sealed record RegisterResponse(Guid UserId);
 
     private sealed record TokenResponse(string AccessToken);

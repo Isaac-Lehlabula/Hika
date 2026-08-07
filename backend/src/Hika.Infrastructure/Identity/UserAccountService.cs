@@ -1,5 +1,6 @@
 using Hika.Application.Users.Ports;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hika.Infrastructure.Identity;
 
@@ -39,6 +40,18 @@ public sealed class UserAccountService(UserManager<ApplicationUser> userManager)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         return user is null ? null : ToSummary(user);
+    }
+
+    public async Task<IReadOnlyList<UserAccountSummary>> FindByIdsAsync(
+        IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken)
+    {
+        if (userIds.Count == 0)
+        {
+            return [];
+        }
+
+        var users = await userManager.Users.Where(u => userIds.Contains(u.Id)).ToListAsync(cancellationToken);
+        return users.Select(ToSummary).ToList();
     }
 
     public async Task<CredentialCheckResult> CheckPasswordAsync(

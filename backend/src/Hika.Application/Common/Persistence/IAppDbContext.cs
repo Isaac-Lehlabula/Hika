@@ -1,3 +1,4 @@
+using Hika.Domain.Admin;
 using Hika.Domain.Bookings;
 using Hika.Domain.Drivers;
 using Hika.Domain.Notifications;
@@ -66,6 +67,10 @@ public interface IAppDbContext
     DbSet<Block> Blocks { get; }
 
     DbSet<EmergencyContact> EmergencyContacts { get; }
+
+    DbSet<AuditLog> AuditLogs { get; }
+
+    DbSet<PlatformFeeSettings> PlatformFeeSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 

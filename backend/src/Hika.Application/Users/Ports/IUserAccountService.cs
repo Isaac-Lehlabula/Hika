@@ -13,6 +13,10 @@ public interface IUserAccountService
 
     Task<UserAccountSummary?> FindByIdAsync(Guid userId, CancellationToken cancellationToken);
 
+    /// <summary>Batch lookup for admin list views (see IAdminUserService) — avoids an
+    /// N+1 FindByIdAsync per row when rendering a page of users.</summary>
+    Task<IReadOnlyList<UserAccountSummary>> FindByIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken);
+
     Task<CredentialCheckResult> CheckPasswordAsync(Guid userId, string password, CancellationToken cancellationToken);
 
     Task MarkEmailConfirmedAsync(Guid userId, CancellationToken cancellationToken);

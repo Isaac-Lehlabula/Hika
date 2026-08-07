@@ -1,3 +1,4 @@
+using Hika.Domain.Admin;
 using Hika.Domain.Common;
 using Hika.Domain.Payments;
 using Shouldly;
@@ -6,10 +7,12 @@ namespace Hika.UnitTests.Domain.Payments;
 
 public class PaymentTests
 {
+    private const decimal FeeRate = PlatformFeeSettings.DefaultRate;
+
     [Fact]
     public void Charge_SplitsFareIntoPlatformFeeAndDriverPayout()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(1000m));
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(1000m), FeeRate);
 
         payment.Amount.Amount.ShouldBe(1000m);
         payment.PlatformFee.Amount.ShouldBe(150m);
@@ -20,7 +23,7 @@ public class PaymentTests
     [Fact]
     public void Charge_PlatformFeePlusPayout_AlwaysEqualsFare()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(333.33m));
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(333.33m), FeeRate);
 
         (payment.PlatformFee.Amount + payment.DriverPayoutAmount.Amount).ShouldBe(payment.Amount.Amount);
     }
@@ -28,7 +31,7 @@ public class PaymentTests
     [Fact]
     public void MarkSucceeded_PendingPayment_SetsStatusAndReference()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m));
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
 
         payment.MarkSucceeded("MOCK-ABC123");
 
@@ -39,7 +42,7 @@ public class PaymentTests
     [Fact]
     public void MarkSucceeded_AlreadySucceededPayment_Throws()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m));
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
         payment.MarkSucceeded("MOCK-ABC123");
 
         Should.Throw<InvalidOperationException>(() => payment.MarkSucceeded("MOCK-XYZ789"));
@@ -48,7 +51,7 @@ public class PaymentTests
     [Fact]
     public void MarkFailed_PendingPayment_SetsStatusToFailed()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m));
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
 
         payment.MarkFailed();
 
@@ -58,7 +61,7 @@ public class PaymentTests
     [Fact]
     public void MarkRefunded_SucceededPayment_SetsStatusToRefunded()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m));
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
         payment.MarkSucceeded("MOCK-ABC123");
 
         payment.MarkRefunded();
@@ -69,7 +72,7 @@ public class PaymentTests
     [Fact]
     public void MarkRefunded_PendingPayment_Throws()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m));
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
 
         Should.Throw<InvalidOperationException>(() => payment.MarkRefunded());
     }

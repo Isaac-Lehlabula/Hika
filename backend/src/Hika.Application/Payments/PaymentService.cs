@@ -2,6 +2,7 @@ using Hika.Application.Common.Exceptions;
 using Hika.Application.Common.Persistence;
 using Hika.Application.Payments.Dtos;
 using Hika.Application.Payments.Ports;
+using Hika.Domain.Admin;
 using Hika.Domain.Bookings;
 using Hika.Domain.Common;
 using Hika.Domain.Payments;
@@ -16,7 +17,8 @@ public sealed class PaymentService(IAppDbContext db, IPaymentGateway paymentGate
     {
         var gatewayResult = await paymentGateway.InitiateChargeAsync(bookingId, fare, cancellationToken);
 
-        var payment = Payment.Charge(bookingId, fare);
+        var feeRate = await GetCurrentFeeRateAsync(cancellationToken);
+        var payment = Payment.Charge(bookingId, fare, feeRate);
         if (gatewayResult.Succeeded)
         {
             payment.MarkSucceeded(gatewayResult.ProviderReference!);
@@ -55,6 +57,17 @@ public sealed class PaymentService(IAppDbContext db, IPaymentGateway paymentGate
             throw new NotFoundException(nameof(Booking), bookingId);
         }
 
+        return await RefundCoreAsync(bookingId, reason, cancellationToken);
+    }
+
+    /// <summary>Same refund flow as <see cref="RefundAsync"/> but without the driver-ownership
+    /// check — for admin financial oversight (see docs/api-design.md's Admin section), which
+    /// is authorized by the caller's Admin policy instead, not by who owns the trip.</summary>
+    public Task<PaymentResponse> AdminRefundAsync(Guid bookingId, string reason, CancellationToken cancellationToken) =>
+        RefundCoreAsync(bookingId, reason, cancellationToken);
+
+    private async Task<PaymentResponse> RefundCoreAsync(Guid bookingId, string reason, CancellationToken cancellationToken)
+    {
         var payment = await db.Payments.FirstOrDefaultAsync(p => p.BookingId == bookingId, cancellationToken)
             ?? throw new NotFoundException("Payment for booking", bookingId);
 
@@ -80,6 +93,22 @@ public sealed class PaymentService(IAppDbContext db, IPaymentGateway paymentGate
         await db.SaveChangesAsync(cancellationToken);
 
         return ToResponse(payment);
+    }
+
+    /// <summary>Lazily seeds the singleton settings row at its default rate the first time
+    /// it's needed — see PlatformFeeSettings.CreateDefault — so a fresh database doesn't need
+    /// a separate seeding step before the very first booking can be accepted.</summary>
+    private async Task<decimal> GetCurrentFeeRateAsync(CancellationToken cancellationToken)
+    {
+        var settings = await db.PlatformFeeSettings.FirstOrDefaultAsync(s => s.Id == PlatformFeeSettings.SingletonId, cancellationToken);
+        if (settings is not null)
+        {
+            return settings.Rate;
+        }
+
+        settings = PlatformFeeSettings.CreateDefault();
+        db.PlatformFeeSettings.Add(settings);
+        return settings.Rate;
     }
 
     private async Task EnsureCallerCanViewAsync(Guid callerId, Booking booking, CancellationToken cancellationToken)

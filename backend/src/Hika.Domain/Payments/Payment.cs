@@ -22,11 +22,6 @@ public enum PaymentStatus
 /// </summary>
 public sealed class Payment : AuditableEntity
 {
-    /// <remarks>15% is a placeholder pending an actual pricing/business decision — see
-    /// docs/south-africa.md's payment-provider note. Kept as one constant rather than
-    /// scattered across call sites, so it's a one-line change once a real rate is set.</remarks>
-    private const decimal PlatformFeeRate = 0.15m;
-
     public Guid BookingId { get; private set; }
 
     /// <summary>The full fare — what the passenger is charged.</summary>
@@ -52,9 +47,11 @@ public sealed class Payment : AuditableEntity
         DriverPayoutAmount = Money.Zero();
     }
 
-    public static Payment Charge(Guid bookingId, Money fare)
+    /// <param name="feeRate">The platform's cut as a fraction (e.g. 0.15 for 15%) — see
+    /// Hika.Domain.Admin.PlatformFeeSettings, the admin-configurable source of this value.</param>
+    public static Payment Charge(Guid bookingId, Money fare, decimal feeRate)
     {
-        var platformFee = new Money(decimal.Round(fare.Amount * PlatformFeeRate, 2, MidpointRounding.ToEven), fare.Currency);
+        var platformFee = new Money(decimal.Round(fare.Amount * feeRate, 2, MidpointRounding.ToEven), fare.Currency);
         var payout = fare - platformFee;
 
         return new Payment

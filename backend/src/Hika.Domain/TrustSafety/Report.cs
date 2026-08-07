@@ -51,4 +51,34 @@ public sealed class Report : AuditableEntity
             Description = description,
             Status = ReportStatus.Open,
         };
+
+    public void MarkUnderReview()
+    {
+        if (Status is ReportStatus.Resolved or ReportStatus.Dismissed)
+        {
+            throw new InvalidOperationException($"Cannot move a {Status} report back under review.");
+        }
+
+        Status = ReportStatus.UnderReview;
+    }
+
+    public void Resolve()
+    {
+        if (Status is ReportStatus.Resolved or ReportStatus.Dismissed)
+        {
+            throw new InvalidOperationException($"Report is already {Status}.");
+        }
+
+        Status = ReportStatus.Resolved;
+    }
+
+    public void Dismiss()
+    {
+        if (Status is ReportStatus.Resolved or ReportStatus.Dismissed)
+        {
+            throw new InvalidOperationException($"Report is already {Status}.");
+        }
+
+        Status = ReportStatus.Dismissed;
+    }
 }

@@ -1,4 +1,5 @@
 using Hika.Application.Common.Persistence;
+using Hika.Domain.Admin;
 using Hika.Domain.Bookings;
 using Hika.Domain.Common;
 using Hika.Domain.Drivers;
@@ -66,6 +67,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Block> Blocks => Set<Block>();
 
     public DbSet<EmergencyContact> EmergencyContacts => Set<EmergencyContact>();
+
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    public DbSet<PlatformFeeSettings> PlatformFeeSettings => Set<PlatformFeeSettings>();
 
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken) =>
         Database.BeginTransactionAsync(cancellationToken);
