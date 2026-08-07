@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Hika.Api.Middleware;
 using Hika.Application;
 using Hika.Infrastructure;
@@ -44,7 +45,8 @@ try
     builder.Services.AddProblemDetails();
 
     builder.Services
-        .AddControllers(options => options.Filters.Add<ValidationActionFilter>());
+        .AddControllers(options => options.Filters.Add<ValidationActionFilter>())
+        .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
     builder.Services.AddOpenApi();
 
@@ -144,6 +146,12 @@ try
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await db.Database.MigrateAsync();
+
+        if (!await db.Locations.AnyAsync())
+        {
+            db.Locations.AddRange(LocationSeedData.Build());
+            await db.SaveChangesAsync();
+        }
     }
 
     app.Run();

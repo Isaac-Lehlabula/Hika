@@ -1,4 +1,5 @@
 using Hika.Domain.Drivers;
+using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,14 @@ public interface IAppDbContext
     DbSet<Vehicle> Vehicles { get; }
 
     DbSet<Verification> Verifications { get; }
+
+    DbSet<Location> Locations { get; }
+
+    DbSet<Trip> Trips { get; }
+
+    DbSet<TripStop> TripStops { get; }
+
+    DbSet<TripSegment> TripSegments { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -1,8 +1,11 @@
 using Hika.Application.Common.Persistence;
+using Hika.Domain.Common;
 using Hika.Domain.Drivers;
+using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Hika.UnitTests.TestSupport;
 
@@ -44,6 +47,14 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
 
     public DbSet<Verification> Verifications => Set<Verification>();
 
+    public DbSet<Location> Locations => Set<Location>();
+
+    public DbSet<Trip> Trips => Set<Trip>();
+
+    public DbSet<TripStop> TripStops => Set<TripStop>();
+
+    public DbSet<TripSegment> TripSegments => Set<TripSegment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserProfile>().HasKey(p => p.Id);
@@ -64,5 +75,40 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
         modelBuilder.Entity<VehiclePhoto>().HasKey(p => p.Id);
 
         modelBuilder.Entity<Verification>().HasKey(v => v.Id);
+
+        modelBuilder.Entity<Location>().HasKey(l => l.Id);
+
+        modelBuilder.Entity<Trip>(builder =>
+        {
+            builder.HasKey(t => t.Id);
+            builder.ComplexProperty(t => t.PricePerSeat);
+            builder.HasMany(t => t.Stops).WithOne().HasForeignKey(s => s.TripId);
+            builder.Navigation(t => t.Stops).UsePropertyAccessMode(PropertyAccessMode.Field);
+            builder.HasMany(t => t.Segments).WithOne().HasForeignKey(s => s.TripId);
+            builder.Navigation(t => t.Segments).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<TripStop>().HasKey(s => s.Id);
+
+        modelBuilder.Entity<TripSegment>(builder =>
+        {
+            builder.HasKey(s => s.Id);
+            builder.ComplexProperty(s => s.PriceOverride);
+        });
+
+        // Same client-generated-key convention as production — see AppDbContext for why.
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (!typeof(Entity).IsAssignableFrom(entityType.ClrType))
+            {
+                continue;
+            }
+
+            var idProperty = entityType.FindProperty(nameof(Entity.Id));
+            if (idProperty is not null)
+            {
+                idProperty.ValueGenerated = ValueGenerated.Never;
+            }
+        }
     }
 }

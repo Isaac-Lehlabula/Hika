@@ -1,6 +1,7 @@
 using Hika.Application.Common.Persistence;
 using Hika.Domain.Common;
 using Hika.Domain.Drivers;
+using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
 using Hika.Infrastructure.Identity;
@@ -29,6 +30,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
 
     public DbSet<Verification> Verifications => Set<Verification>();
+
+    public DbSet<Location> Locations => Set<Location>();
+
+    public DbSet<Trip> Trips => Set<Trip>();
+
+    public DbSet<TripStop> TripStops => Set<TripStop>();
+
+    public DbSet<TripSegment> TripSegments => Set<TripSegment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
