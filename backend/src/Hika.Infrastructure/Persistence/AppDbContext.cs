@@ -1,4 +1,5 @@
 using Hika.Application.Common.Persistence;
+using Hika.Domain.Bookings;
 using Hika.Domain.Common;
 using Hika.Domain.Drivers;
 using Hika.Domain.Trips;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Hika.Infrastructure.Persistence;
 
@@ -38,6 +40,18 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<TripStop> TripStops => Set<TripStop>();
 
     public DbSet<TripSegment> TripSegments => Set<TripSegment>();
+
+    public DbSet<Booking> Bookings => Set<Booking>();
+
+    public DbSet<BookingPassenger> BookingPassengers => Set<BookingPassenger>();
+
+    public DbSet<BookingSegment> BookingSegments => Set<BookingSegment>();
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken) =>
+        Database.BeginTransactionAsync(cancellationToken);
+
+    public Task ExecuteSqlRawAsync(string sql, object[] parameters, CancellationToken cancellationToken) =>
+        Database.ExecuteSqlRawAsync(sql, parameters, cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

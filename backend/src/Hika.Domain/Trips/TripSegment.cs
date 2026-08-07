@@ -32,7 +32,11 @@ public sealed class TripSegment : Entity
         SeatsAvailable = seatsAvailable;
     }
 
-    internal void Reserve(int seats)
+    /// <summary>Called by BookingService inside the advisory-locked reservation transaction —
+    /// see docs/domain-model.md §4.3. Public because that crosses from the Bookings module
+    /// into this Trip-owned segment, which is BookingService's legitimate job, not a
+    /// module-boundary violation to hide behind `internal`.</summary>
+    public void Reserve(int seats)
     {
         if (seats > SeatsAvailable)
         {
@@ -42,5 +46,5 @@ public sealed class TripSegment : Entity
         SeatsAvailable -= seats;
     }
 
-    internal void Release(int seats) => SeatsAvailable += seats;
+    public void Release(int seats) => SeatsAvailable += seats;
 }

@@ -1,8 +1,10 @@
+using Hika.Domain.Bookings;
 using Hika.Domain.Drivers;
 using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Hika.Application.Common.Persistence;
 
@@ -39,5 +41,23 @@ public interface IAppDbContext
 
     DbSet<TripSegment> TripSegments { get; }
 
+    DbSet<Booking> Bookings { get; }
+
+    DbSet<BookingPassenger> BookingPassengers { get; }
+
+    DbSet<BookingSegment> BookingSegments { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The concurrency-safe seat reservation (see docs/domain-model.md §4.3) needs an explicit
+    /// transaction to hold a Postgres advisory lock (via <see cref="ExecuteSqlRawAsync"/>)
+    /// across the read-check-decrement sequence. These two members are the seam's one
+    /// deliberate crack from "DbSet already is a repository" — raw SQL and manual transactions
+    /// aren't expressible as a DbSet, but both are still generic EF Core concepts, not
+    /// Npgsql-specific ones, so this doesn't leak the concrete provider into Application.
+    /// </summary>
+    Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken);
+
+    Task ExecuteSqlRawAsync(string sql, object[] parameters, CancellationToken cancellationToken);
 }

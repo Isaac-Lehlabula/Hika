@@ -68,10 +68,11 @@ public sealed class TripService(IAppDbContext db) : ITripService
             return [];
         }
 
-        var driverSummary = await BuildDriverSummaryAsync(driverUserId, cancellationToken)
+        var driverSummary = (await TripDisplayHelpers.BuildDriverSummariesAsync(db, [driverUserId], cancellationToken))
+            .GetValueOrDefault(driverUserId)
             ?? throw new InvalidOperationException("Driver profile disappeared mid-query.");
 
-        var locations = await LoadLocationsAsync(trips.SelectMany(t => t.Stops), cancellationToken);
+        var locations = await TripDisplayHelpers.LoadLocationsAsync(db, trips.SelectMany(t => t.Stops), cancellationToken);
 
         return trips.Select(t => ToSummary(t, driverSummary, locations)).ToList();
     }
@@ -104,13 +105,14 @@ public sealed class TripService(IAppDbContext db) : ITripService
             return null;
         }
 
-        var driverSummary = await BuildDriverSummaryAsync(trip.DriverProfileId, cancellationToken)
+        var driverSummary = (await TripDisplayHelpers.BuildDriverSummariesAsync(db, [trip.DriverProfileId], cancellationToken))
+            .GetValueOrDefault(trip.DriverProfileId)
             ?? throw new InvalidOperationException("Trip references a driver profile that no longer exists.");
 
         var vehicle = await db.Vehicles.Include(v => v.Photos).FirstOrDefaultAsync(v => v.Id == trip.VehicleId, cancellationToken)
             ?? throw new InvalidOperationException("Trip references a vehicle that no longer exists.");
 
-        var locations = await LoadLocationsAsync(trip.Stops, cancellationToken);
+        var locations = await TripDisplayHelpers.LoadLocationsAsync(db, trip.Stops, cancellationToken);
         var stopsBySequence = trip.Stops.ToDictionary(s => s.Id, s => s.Sequence);
 
         return new TripResponse
@@ -123,7 +125,7 @@ public sealed class TripService(IAppDbContext db) : ITripService
             LuggageAllowance = trip.LuggageAllowance,
             Notes = trip.Notes,
             Driver = driverSummary,
-            Vehicle = ToVehicleSummary(vehicle),
+            Vehicle = TripDisplayHelpers.ToVehicleSummary(vehicle),
             Stops = trip.Stops.Select(s => ToStopResponse(s, locations)).ToList(),
             Segments = trip.Segments
                 .Select(seg => new TripSegmentResponse
@@ -137,63 +139,12 @@ public sealed class TripService(IAppDbContext db) : ITripService
         };
     }
 
-    private async Task<TripDriverSummary?> BuildDriverSummaryAsync(Guid driverUserId, CancellationToken cancellationToken)
+    private static TripStopResponse ToStopResponse(TripStop stop, IReadOnlyDictionary<Guid, Location> locations) => new()
     {
-        var profile = await db.UserProfiles.FirstOrDefaultAsync(p => p.Id == driverUserId, cancellationToken);
-        var driverProfile = await db.DriverProfiles.FirstOrDefaultAsync(d => d.Id == driverUserId, cancellationToken);
-
-        if (profile is null || driverProfile is null)
-        {
-            return null;
-        }
-
-        return new TripDriverSummary
-        {
-            UserId = profile.Id,
-            FirstName = profile.FirstName,
-            LastName = profile.LastName,
-            PhotoUrl = profile.PhotoUrl,
-            AverageRating = profile.AverageRating,
-            CompletedTripCount = profile.CompletedTripCount,
-            IsVerifiedDriver = driverProfile.IsVerifiedDriver,
-        };
-    }
-
-    private async Task<Dictionary<Guid, Location>> LoadLocationsAsync(IEnumerable<TripStop> stops, CancellationToken cancellationToken)
-    {
-        var locationIds = stops.Where(s => s.LocationId.HasValue).Select(s => s.LocationId!.Value).Distinct().ToList();
-        if (locationIds.Count == 0)
-        {
-            return [];
-        }
-
-        return await db.Locations.Where(l => locationIds.Contains(l.Id)).ToDictionaryAsync(l => l.Id, cancellationToken);
-    }
-
-    private static TripStopResponse ToStopResponse(TripStop stop, IReadOnlyDictionary<Guid, Location> locations)
-    {
-        var name = stop.LocationId.HasValue && locations.TryGetValue(stop.LocationId.Value, out var location)
-            ? location.Name
-            : stop.RawName;
-
-        return new TripStopResponse
-        {
-            Sequence = stop.Sequence,
-            LocationId = stop.LocationId,
-            Name = name,
-            Province = stop.Province.ToString(),
-        };
-    }
-
-    private static TripVehicleSummary ToVehicleSummary(Vehicle vehicle) => new()
-    {
-        Id = vehicle.Id,
-        Make = vehicle.Make,
-        Model = vehicle.Model,
-        Year = vehicle.Year,
-        Color = vehicle.Color,
-        IsVerified = vehicle.IsVerified,
-        PrimaryPhotoUrl = (vehicle.Photos.FirstOrDefault(p => p.IsPrimary) ?? vehicle.Photos.FirstOrDefault())?.Url,
+        Sequence = stop.Sequence,
+        LocationId = stop.LocationId,
+        Name = TripDisplayHelpers.ResolveStopName(stop, locations),
+        Province = stop.Province.ToString(),
     };
 
     private static TripSummaryResponse ToSummary(Trip trip, TripDriverSummary driver, IReadOnlyDictionary<Guid, Location> locations)

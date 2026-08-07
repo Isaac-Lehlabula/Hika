@@ -1,6 +1,7 @@
 using Hika.Application.Common.Pagination;
 using Hika.Application.Common.Persistence;
 using Hika.Application.Search.Dtos;
+using Hika.Application.Trips;
 using Hika.Application.Trips.Dtos;
 using Hika.Domain.Trips;
 using Microsoft.EntityFrameworkCore;
@@ -61,8 +62,8 @@ public sealed class SearchService(IAppDbContext db) : ISearchService
         var trips = await tripsQuery.ToListAsync(cancellationToken);
 
         var driverIds = trips.Select(t => t.DriverProfileId).Distinct().ToList();
-        var driverSummaries = await BuildDriverSummariesAsync(driverIds, cancellationToken);
-        var locations = await LoadLocationsAsync(trips.SelectMany(t => t.Stops), cancellationToken);
+        var driverSummaries = await TripDisplayHelpers.BuildDriverSummariesAsync(db, driverIds, cancellationToken);
+        var locations = await TripDisplayHelpers.LoadLocationsAsync(db, trips.SelectMany(t => t.Stops), cancellationToken);
 
         var results = new List<SearchTripResponse>();
         foreach (var trip in trips)
@@ -93,9 +94,9 @@ public sealed class SearchService(IAppDbContext db) : ISearchService
             {
                 Id = trip.Id,
                 DepartureAtUtc = trip.DepartureAtUtc,
-                BoardingStopName = ResolveStopName(boardingStop, locations),
+                BoardingStopName = TripDisplayHelpers.ResolveStopName(boardingStop, locations),
                 BoardingProvince = boardingStop.Province.ToString(),
-                AlightingStopName = ResolveStopName(alightingStop, locations),
+                AlightingStopName = TripDisplayHelpers.ResolveStopName(alightingStop, locations),
                 AlightingProvince = alightingStop.Province.ToString(),
                 TotalSeatsOffered = trip.TotalSeatsOffered,
                 SeatsAvailable = seatsAvailable,
@@ -145,10 +146,10 @@ public sealed class SearchService(IAppDbContext db) : ISearchService
             return [];
         }
 
-        var locations = await LoadLocationsAsync(trips.SelectMany(t => t.Stops), cancellationToken);
+        var locations = await TripDisplayHelpers.LoadLocationsAsync(db, trips.SelectMany(t => t.Stops), cancellationToken);
 
         return trips
-            .Select(t => (Origin: ResolveStopName(t.Stops[0], locations), Destination: ResolveStopName(t.Stops[^1], locations)))
+            .Select(t => (Origin: TripDisplayHelpers.ResolveStopName(t.Stops[0], locations), Destination: TripDisplayHelpers.ResolveStopName(t.Stops[^1], locations)))
             .GroupBy(r => (r.Origin, r.Destination))
             .Select(g => new PopularRouteResponse { OriginName = g.Key.Origin, DestinationName = g.Key.Destination, TripCount = g.Count() })
             .OrderByDescending(r => r.TripCount)
@@ -178,51 +179,4 @@ public sealed class SearchService(IAppDbContext db) : ISearchService
         _ => results.OrderBy(r => r.DepartureAtUtc).ToList(),
     };
 
-    private async Task<Dictionary<Guid, TripDriverSummary>> BuildDriverSummariesAsync(
-        IReadOnlyList<Guid> driverUserIds, CancellationToken cancellationToken)
-    {
-        if (driverUserIds.Count == 0)
-        {
-            return [];
-        }
-
-        var profiles = await db.UserProfiles.Where(p => driverUserIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, cancellationToken);
-        var driverProfiles = await db.DriverProfiles.Where(d => driverUserIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, cancellationToken);
-
-        var result = new Dictionary<Guid, TripDriverSummary>();
-        foreach (var id in driverUserIds)
-        {
-            if (!profiles.TryGetValue(id, out var profile) || !driverProfiles.TryGetValue(id, out var driverProfile))
-            {
-                continue;
-            }
-
-            result[id] = new TripDriverSummary
-            {
-                UserId = profile.Id,
-                FirstName = profile.FirstName,
-                LastName = profile.LastName,
-                PhotoUrl = profile.PhotoUrl,
-                AverageRating = profile.AverageRating,
-                CompletedTripCount = profile.CompletedTripCount,
-                IsVerifiedDriver = driverProfile.IsVerifiedDriver,
-            };
-        }
-
-        return result;
-    }
-
-    private async Task<Dictionary<Guid, Location>> LoadLocationsAsync(IEnumerable<TripStop> stops, CancellationToken cancellationToken)
-    {
-        var locationIds = stops.Where(s => s.LocationId.HasValue).Select(s => s.LocationId!.Value).Distinct().ToList();
-        if (locationIds.Count == 0)
-        {
-            return [];
-        }
-
-        return await db.Locations.Where(l => locationIds.Contains(l.Id)).ToDictionaryAsync(l => l.Id, cancellationToken);
-    }
-
-    private static string ResolveStopName(TripStop stop, IReadOnlyDictionary<Guid, Location> locations) =>
-        stop.LocationId.HasValue && locations.TryGetValue(stop.LocationId.Value, out var location) ? location.Name : stop.RawName;
 }

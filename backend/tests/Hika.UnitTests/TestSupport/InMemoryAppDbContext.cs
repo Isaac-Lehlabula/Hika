@@ -1,4 +1,5 @@
 using Hika.Application.Common.Persistence;
+using Hika.Domain.Bookings;
 using Hika.Domain.Common;
 using Hika.Domain.Drivers;
 using Hika.Domain.Trips;
@@ -6,6 +7,7 @@ using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Hika.UnitTests.TestSupport;
 
@@ -55,6 +57,23 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
 
     public DbSet<TripSegment> TripSegments => Set<TripSegment>();
 
+    public DbSet<Booking> Bookings => Set<Booking>();
+
+    public DbSet<BookingPassenger> BookingPassengers => Set<BookingPassenger>();
+
+    public DbSet<BookingSegment> BookingSegments => Set<BookingSegment>();
+
+    // The InMemory provider doesn't support transactions or raw SQL — BookingService.RequestAsync,
+    // which needs both for the advisory-locked reservation, is covered by the Postgres
+    // integration tests instead. These exist only so InMemoryAppDbContext satisfies
+    // IAppDbContext; the explicit exception is clearer than letting a relational-only
+    // extension method fail for an unrelated reason.
+    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken) =>
+        throw new NotSupportedException("InMemoryAppDbContext doesn't support transactions.");
+
+    public Task ExecuteSqlRawAsync(string sql, object[] parameters, CancellationToken cancellationToken) =>
+        throw new NotSupportedException("InMemoryAppDbContext doesn't support raw SQL.");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserProfile>().HasKey(p => p.Id);
@@ -95,6 +114,18 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
             builder.HasKey(s => s.Id);
             builder.ComplexProperty(s => s.PriceOverride);
         });
+
+        modelBuilder.Entity<Booking>(builder =>
+        {
+            builder.HasKey(b => b.Id);
+            builder.ComplexProperty(b => b.TotalPrice);
+            builder.HasMany(b => b.Passengers).WithOne().HasForeignKey(p => p.BookingId);
+            builder.Navigation(b => b.Passengers).UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<BookingPassenger>().HasKey(p => p.Id);
+
+        modelBuilder.Entity<BookingSegment>().HasKey(s => s.Id);
 
         // Same client-generated-key convention as production — see AppDbContext for why.
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
