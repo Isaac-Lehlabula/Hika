@@ -12,7 +12,7 @@ Riverpod (not Provider, BLoC, or GetX) for:
 - **No `BuildContext` requirement** — business logic (API calls, token refresh, form state) can live outside widgets entirely, keeping the separation described below real rather than aspirational.
 - **Right-sized for this app** — BLoC's explicit event/state classes are more ceremony than a marketplace app with fairly standard CRUD+auth flows needs; Riverpod gives structure (providers, notifiers) without that overhead. GetX was considered and rejected — its service-locator/global-state style trades away exactly the compile-time safety and testability Riverpod provides.
 
-Concretely: `Riverpod` (code-generation via `riverpod_generator` for less boilerplate), `AsyncNotifier`/`Notifier` for stateful features (auth session, profile), plain `Provider`/`FutureProvider` for derived/one-shot data (e.g. a trip search result set).
+Concretely: plain (non-code-generated) Riverpod — `Notifier`/`AsyncNotifier` for stateful features (auth session, profile), plain `Provider`/`FutureProvider` for derived/one-shot data (e.g. a trip search result set). `riverpod_generator` was evaluated but dropped: at implementation time it pulled in `riverpod_lint`/`custom_lint`/`analyzer` version ranges that didn't resolve against this project's Flutter/Riverpod versions (a fast-moving-ecosystem issue, not a design objection) — the manually-declared provider API is equally valid, still fully compile-time-safe, and avoids a `build_runner` step in the dev loop. Worth revisiting once the package ecosystem catches up.
 
 ## 3. Project structure
 

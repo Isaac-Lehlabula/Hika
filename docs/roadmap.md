@@ -8,7 +8,7 @@ Each phase: explain → implement (backend + mobile together, from Phase 2 on) �
 |---|---|---|
 | 0 | Architecture & domain design docs (`/docs`) | ✅ Done |
 | 1 | Backend solution/infra scaffolding — projects, Serilog, health checks, OpenAPI, EF plumbing, CORS | ✅ Done |
-| 2 | **Auth & users** — backend: registration, login, logout, email/phone verification, refresh tokens, password reset, profile. Mobile: Flutter scaffold (design system, networking, secure token storage), Register/Login/VerifyEmail/VerifyPhone/ForgotPassword/ResetPassword/Profile screens. | 🔶 Backend done, mobile in progress |
+| 2 | **Auth & users** — backend: registration, login, logout, email/phone verification, refresh tokens, password reset, profile. Mobile: Flutter scaffold (design system, networking, secure token storage), Register/Login/VerifyEmail/VerifyPhone/ForgotPassword/ResetPassword/Profile screens. | ✅ Done |
 | 3 | **Driver profiles & vehicles** — backend: driver profile, vehicle CRUD, verification submission. Mobile: "Become a driver" flow, vehicle management screens. | ⬜ Not started |
 | 4 | **Trips, stops, segments** — backend: post a trip, intermediate stops, segment inventory creation. Mobile: guided "post a trip" flow, trip detail screen. | ⬜ Not started |
 | 5 | **Search** — backend: Find a Hike query, filters/sorting, location autocomplete. Mobile: home screen search, results list with trip cards. | ⬜ Not started |
@@ -23,8 +23,8 @@ Each phase: explain → implement (backend + mobile together, from Phase 2 on) �
 ## What's runnable today
 
 - Backend: `docker compose up -d postgres mailhog`, then `dotnet run --project backend/src/Hika.Api` — full auth flow (register → verify email → verify phone OTP → login → refresh → profile edit → logout) works end-to-end against a real Postgres database. 55 automated tests passing (45 unit, 10 integration against a real Postgres via Testcontainers).
-- Mobile: in progress — see Phase 2 status above.
+- Mobile: `flutter run` (see `mobile/hika_app/README.md`) — Register, Login, Verify Email, Verify Phone, Forgot/Reset Password, and Profile screens, all wired to the real backend and verified end-to-end (register → login → fetch profile against a live API). Home shows the flagship search UI (not yet wired to a backend); Trips/Bookings/Inbox show honest "coming soon" states; bottom-nav shell in place.
 
 ## Next up
 
-Finish Phase 2's mobile half (Flutter auth screens against the working backend), then **Phase 3 — Driver profiles & vehicles**, which builds on Phase 2 (a `DriverProfile` is 1:1 with `ApplicationUser`) and is itself a prerequisite for Phase 4 (a `Trip` needs a driver + vehicle).
+**Phase 3 — Driver profiles & vehicles**, which builds on Phase 2 (a `DriverProfile` is 1:1 with `ApplicationUser`) and is itself a prerequisite for Phase 4 (a `Trip` needs a driver + vehicle) — backend endpoints and the "Become a driver" / vehicle-management Flutter screens land together.
