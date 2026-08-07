@@ -6,6 +6,7 @@ import '../features/bookings/data/bookings_api.dart';
 import '../features/bookings/data/payments_api.dart';
 import '../features/drivers/data/drivers_api.dart';
 import '../features/profile/data/profile_api.dart';
+import '../features/reviews/data/reviews_api.dart';
 import '../features/search/data/search_api.dart';
 import '../features/trips/data/trips_api.dart';
 import 'networking/api_client.dart';
@@ -35,3 +36,5 @@ final searchApiProvider = Provider<SearchApi>((ref) => SearchApi(ref.watch(apiCl
 final bookingsApiProvider = Provider<BookingsApi>((ref) => BookingsApi(ref.watch(apiClientProvider)));
 
 final paymentsApiProvider = Provider<PaymentsApi>((ref) => PaymentsApi(ref.watch(apiClientProvider)));
+
+final reviewsApiProvider = Provider<ReviewsApi>((ref) => ReviewsApi(ref.watch(apiClientProvider)));

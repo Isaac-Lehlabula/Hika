@@ -9,6 +9,8 @@ import '../../../../core/theme/hika_spacing.dart';
 import '../../../../shared/widgets/hika_badge.dart';
 import '../../../../shared/widgets/hika_button.dart';
 import '../../../../shared/widgets/hika_card.dart';
+import '../../../profile/presentation/providers/profile_controller.dart';
+import '../../../reviews/presentation/widgets/submit_review_sheet.dart';
 import '../../data/booking.dart';
 import '../providers/booking_detail_controller.dart';
 import '../providers/my_bookings_controller.dart';
@@ -25,6 +27,16 @@ class BookingDetailScreen extends ConsumerStatefulWidget {
 
 class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   bool _isCancelling = false;
+  bool _hasReviewed = false;
+
+  Future<void> _leaveReview(Booking booking, bool isDriver) async {
+    final revieweeLabel = isDriver ? booking.passenger.firstName : booking.trip.driver.firstName;
+    final submitted = await SubmitReviewSheet.show(context, bookingId: widget.bookingId, revieweeLabel: revieweeLabel);
+    if (submitted == true && mounted) {
+      setState(() => _hasReviewed = true);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thanks for your review!')));
+    }
+  }
 
   Future<void> _cancel() async {
     final confirmed = await showDialog<bool>(
@@ -60,6 +72,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final bookingAsync = ref.watch(bookingDetailControllerProvider(widget.bookingId));
+    final currentUserId = ref.watch(profileControllerProvider).value?.userId;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Booking')),
@@ -72,62 +85,74 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             onPressed: () => ref.read(bookingDetailControllerProvider(widget.bookingId).notifier).refresh(),
           ),
         ),
-        data: (booking) => RefreshIndicator(
-          onRefresh: () => ref.read(bookingDetailControllerProvider(widget.bookingId).notifier).refresh(),
-          child: ListView(
-            padding: const EdgeInsets.all(HikaSpacing.lg),
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${booking.trip.originName} → ${booking.trip.destinationName}',
-                      style: Theme.of(context).textTheme.headlineSmall,
+        data: (booking) {
+          final isDriver = currentUserId != null && currentUserId == booking.trip.driver.userId;
+
+          return RefreshIndicator(
+            onRefresh: () => ref.read(bookingDetailControllerProvider(widget.bookingId).notifier).refresh(),
+            child: ListView(
+              padding: const EdgeInsets.all(HikaSpacing.lg),
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${booking.trip.originName} → ${booking.trip.destinationName}',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
-                  ),
-                  booking.status.toTripStatusBadge(),
-                ],
-              ),
-              const SizedBox(height: HikaSpacing.xs),
-              Text(
-                DateFormat('EEEE d MMMM, HH:mm').format(booking.trip.departureAtUtc.toLocal()),
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: HikaColors.textSecondaryLight),
-              ),
-              if (booking.status == 'Pending') ...[
-                const SizedBox(height: HikaSpacing.sm),
+                    booking.status.toTripStatusBadge(),
+                  ],
+                ),
+                const SizedBox(height: HikaSpacing.xs),
                 Text(
-                  'Waiting for the driver to approve your request.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: HikaColors.warning),
+                  DateFormat('EEEE d MMMM, HH:mm').format(booking.trip.departureAtUtc.toLocal()),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: HikaColors.textSecondaryLight),
                 ),
-              ],
-              const SizedBox(height: HikaSpacing.xl),
-              _DriverCard(trip: booking.trip),
-              const SizedBox(height: HikaSpacing.lg),
-              _BookingDetailsCard(booking: booking),
-              if (booking.status != 'Pending') ...[
-                const SizedBox(height: HikaSpacing.lg),
-                _PaymentCard(bookingId: widget.bookingId),
-              ],
-              if (booking.canCancel) ...[
+                if (booking.status == 'Pending') ...[
+                  const SizedBox(height: HikaSpacing.sm),
+                  Text(
+                    'Waiting for the driver to approve your request.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: HikaColors.warning),
+                  ),
+                ],
                 const SizedBox(height: HikaSpacing.xl),
+                _DriverCard(trip: booking.trip),
+                const SizedBox(height: HikaSpacing.lg),
+                _BookingDetailsCard(booking: booking),
+                if (booking.status != 'Pending') ...[
+                  const SizedBox(height: HikaSpacing.lg),
+                  _PaymentCard(bookingId: widget.bookingId),
+                ],
+                if (booking.canCancel) ...[
+                  const SizedBox(height: HikaSpacing.xl),
+                  HikaButton(
+                    label: 'Cancel booking',
+                    variant: HikaButtonVariant.secondary,
+                    icon: Icons.cancel_outlined,
+                    isLoading: _isCancelling,
+                    onPressed: _cancel,
+                  ),
+                ],
+                if (booking.status == 'Completed' && !_hasReviewed) ...[
+                  const SizedBox(height: HikaSpacing.xl),
+                  HikaButton(
+                    label: 'Leave a review',
+                    icon: Icons.star_outline_rounded,
+                    onPressed: () => _leaveReview(booking, isDriver),
+                  ),
+                ],
+                const SizedBox(height: HikaSpacing.md),
                 HikaButton(
-                  label: 'Cancel booking',
-                  variant: HikaButtonVariant.secondary,
-                  icon: Icons.cancel_outlined,
-                  isLoading: _isCancelling,
-                  onPressed: _cancel,
+                  label: 'View trip',
+                  variant: HikaButtonVariant.text,
+                  onPressed: () => context.push('/trips/${booking.trip.tripId}'),
                 ),
               ],
-              const SizedBox(height: HikaSpacing.md),
-              HikaButton(
-                label: 'View trip',
-                variant: HikaButtonVariant.text,
-                onPressed: () => context.push('/trips/${booking.trip.tripId}'),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

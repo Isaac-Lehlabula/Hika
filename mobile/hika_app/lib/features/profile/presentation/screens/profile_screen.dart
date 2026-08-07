@@ -87,18 +87,27 @@ class _ProfileContent extends ConsumerWidget {
                   style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                 ),
                 const SizedBox(height: HikaSpacing.sm),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.star_rounded, size: 18, color: HikaColors.warning),
-                    const SizedBox(width: 4),
-                    Text(
-                      profile.averageRating == null ? 'No ratings yet' : profile.averageRating!.toStringAsFixed(1),
-                      style: theme.textTheme.bodyMedium,
+                InkWell(
+                  onTap: () => context.push('/users/${profile.userId}/reviews', extra: profile.firstName),
+                  borderRadius: BorderRadius.circular(HikaRadius.pill),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: HikaSpacing.xxs, horizontal: HikaSpacing.xs),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.star_rounded, size: 18, color: HikaColors.warning),
+                        const SizedBox(width: 4),
+                        Text(
+                          profile.averageRating == null ? 'No ratings yet' : profile.averageRating!.toStringAsFixed(1),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        const SizedBox(width: HikaSpacing.md),
+                        Text('${profile.completedTripCount} trips', style: theme.textTheme.bodyMedium),
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+                      ],
                     ),
-                    const SizedBox(width: HikaSpacing.md),
-                    Text('${profile.completedTripCount} trips', style: theme.textTheme.bodyMedium),
-                  ],
+                  ),
                 ),
               ],
             ),
