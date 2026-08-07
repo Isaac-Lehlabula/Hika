@@ -12,6 +12,7 @@ lib/
   features/
     auth/           Register, login, email/phone verification, password reset
     profile/        Own profile view/edit
+    drivers/        Become-a-driver flow, vehicle management, photo/document upload
     home/           The flagship "Where are you going home to?" search screen
     shell/          Bottom-nav shell, splash screen
 test/             Mirrors lib/ structure
@@ -35,4 +36,4 @@ flutter test
 
 ## Current status
 
-Auth flow (register, login, logout, email verification, phone OTP verification, forgot/reset password) and profile view/edit are implemented and wired to the real backend. The bottom-nav shell (Home, Trips, Bookings, Inbox, Profile) is in place; Home shows the flagship search UI (not yet wired to a backend — that's Phase 5); Trips/Bookings/Inbox show honest "coming soon" states. See [`/docs/roadmap.md`](../../docs/roadmap.md).
+Auth flow (register, login, logout, email verification, phone OTP verification, forgot/reset password), profile view/edit, and driver onboarding (license details + document submission, vehicle CRUD, photo upload with a primary-photo picker, vehicle registration-document submission) are implemented and wired to the real backend. The bottom-nav shell (Home, Trips, Bookings, Inbox, Profile) is in place; Home shows the flagship search UI (not yet wired to a backend — that's Phase 5); Trips/Bookings/Inbox show honest "coming soon" states. See [`/docs/roadmap.md`](../../docs/roadmap.md).

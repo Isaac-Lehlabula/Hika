@@ -8,6 +8,10 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../features/auth/presentation/screens/verify_phone_screen.dart';
+import '../../features/drivers/presentation/screens/add_vehicle_screen.dart';
+import '../../features/drivers/presentation/screens/become_driver_screen.dart';
+import '../../features/drivers/presentation/screens/vehicle_detail_screen.dart';
+import '../../features/drivers/presentation/screens/vehicles_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/shell/presentation/splash_screen.dart';
 
@@ -48,6 +52,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/reset-password', builder: (context, state) => const ResetPasswordScreen()),
       GoRoute(path: '/verify-phone', builder: (context, state) => const VerifyPhoneScreen()),
       GoRoute(path: '/home', builder: (context, state) => const AppShell()),
+      GoRoute(path: '/become-driver', builder: (context, state) => const BecomeDriverScreen()),
+      GoRoute(path: '/vehicles', builder: (context, state) => const VehiclesScreen()),
+      GoRoute(path: '/vehicles/new', builder: (context, state) => const AddVehicleScreen()),
+      GoRoute(
+        path: '/vehicles/:id',
+        builder: (context, state) => VehicleDetailScreen(vehicleId: state.pathParameters['id']!),
+      ),
     ],
   );
 });

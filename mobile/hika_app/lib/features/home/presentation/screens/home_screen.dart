@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/hika_colors.dart';
 import '../../../../core/theme/hika_spacing.dart';
@@ -67,7 +68,7 @@ class HomeScreen extends ConsumerWidget {
                 label: "I'm Driving",
                 variant: HikaButtonVariant.text,
                 icon: Icons.drive_eta_outlined,
-                onPressed: () => _showComingSoon(context, 'Posting a trip'),
+                onPressed: () => context.push('/become-driver'),
               ),
             ),
             const SizedBox(height: HikaSpacing.xl),

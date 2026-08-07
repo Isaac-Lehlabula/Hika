@@ -92,6 +92,16 @@ class ApiClient {
   Future<Map<String, dynamic>?> get(String path, {Map<String, dynamic>? query}) =>
       _send(() => _dio.get<Map<String, dynamic>>(path, queryParameters: query));
 
+  /// For endpoints that return a bare JSON array rather than an object envelope.
+  Future<List<dynamic>> getList(String path, {Map<String, dynamic>? query}) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(path, queryParameters: query);
+      return response.data ?? [];
+    } on DioException catch (error) {
+      throw _mapError(error);
+    }
+  }
+
   Future<Map<String, dynamic>?> post(String path, {Object? data, bool skipAuth = false}) => _send(
     () => _dio.post<Map<String, dynamic>>(
       path,
@@ -102,6 +112,18 @@ class ApiClient {
 
   Future<Map<String, dynamic>?> put(String path, {Object? data}) =>
       _send(() => _dio.put<Map<String, dynamic>>(path, data: data));
+
+  Future<void> delete(String path) => _send(() => _dio.delete<Map<String, dynamic>>(path));
+
+  /// Uploads [filePath] as multipart/form-data alongside any extra [fields] (e.g. `isPrimary`).
+  Future<Map<String, dynamic>?> postMultipart(
+    String path, {
+    required String filePath,
+    Map<String, dynamic> fields = const {},
+  }) => _send(() async {
+    final formData = FormData.fromMap({...fields, 'file': await MultipartFile.fromFile(filePath)});
+    return _dio.post<Map<String, dynamic>>(path, data: formData);
+  });
 
   Future<Map<String, dynamic>?> _send(Future<Response<Map<String, dynamic>>> Function() request) async {
     try {

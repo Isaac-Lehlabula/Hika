@@ -134,6 +134,12 @@ class _ProfileContent extends ConsumerWidget {
           ),
           const SizedBox(height: HikaSpacing.xl),
           HikaButton(
+            label: 'Driving',
+            icon: Icons.drive_eta_outlined,
+            onPressed: () => context.push('/become-driver'),
+          ),
+          const SizedBox(height: HikaSpacing.md),
+          HikaButton(
             label: 'Log out',
             variant: HikaButtonVariant.secondary,
             onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
