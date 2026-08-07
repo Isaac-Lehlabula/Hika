@@ -8,6 +8,9 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../features/auth/presentation/screens/verify_phone_screen.dart';
+import '../../features/bookings/presentation/screens/booking_detail_screen.dart';
+import '../../features/bookings/presentation/screens/reserve_seat_screen.dart';
+import '../../features/bookings/presentation/screens/trip_requests_screen.dart';
 import '../../features/drivers/presentation/screens/add_vehicle_screen.dart';
 import '../../features/drivers/presentation/screens/become_driver_screen.dart';
 import '../../features/drivers/presentation/screens/vehicle_detail_screen.dart';
@@ -16,6 +19,7 @@ import '../../features/search/data/search_models.dart';
 import '../../features/search/presentation/screens/search_results_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/shell/presentation/splash_screen.dart';
+import '../../features/trips/data/trip.dart';
 import '../../features/trips/presentation/screens/post_trip_screen.dart';
 import '../../features/trips/presentation/screens/trip_detail_screen.dart';
 
@@ -71,6 +75,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/search/results',
         builder: (context, state) => SearchResultsScreen(query: state.extra! as SearchTripsQuery),
+      ),
+      GoRoute(
+        path: '/trips/:id/reserve',
+        builder: (context, state) => ReserveSeatScreen(trip: state.extra! as Trip),
+      ),
+      GoRoute(
+        path: '/trips/:id/requests',
+        builder: (context, state) => TripRequestsScreen(tripId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/bookings/:id',
+        builder: (context, state) => BookingDetailScreen(bookingId: state.pathParameters['id']!),
       ),
     ],
   );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/networking/api_exception.dart';
@@ -99,14 +100,29 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
                 _RouteCard(trip: trip),
                 const SizedBox(height: HikaSpacing.lg),
                 _DetailsCard(trip: trip),
-                if (isOwner && trip.status == 'Scheduled') ...[
+                if (isOwner) ...[
                   const SizedBox(height: HikaSpacing.xl),
                   HikaButton(
-                    label: 'Cancel trip',
-                    variant: HikaButtonVariant.secondary,
-                    icon: Icons.cancel_outlined,
-                    isLoading: _isCancelling,
-                    onPressed: _cancel,
+                    label: 'Booking requests',
+                    icon: Icons.event_seat_outlined,
+                    onPressed: () => context.push('/trips/${trip.id}/requests'),
+                  ),
+                  if (trip.status == 'Scheduled') ...[
+                    const SizedBox(height: HikaSpacing.sm),
+                    HikaButton(
+                      label: 'Cancel trip',
+                      variant: HikaButtonVariant.secondary,
+                      icon: Icons.cancel_outlined,
+                      isLoading: _isCancelling,
+                      onPressed: _cancel,
+                    ),
+                  ],
+                ] else if (trip.status == 'Scheduled' && trip.minSeatsAvailable > 0) ...[
+                  const SizedBox(height: HikaSpacing.xl),
+                  HikaButton(
+                    label: 'Reserve a seat',
+                    icon: Icons.event_seat_outlined,
+                    onPressed: () => context.push('/trips/${trip.id}/reserve', extra: trip),
                   ),
                 ],
               ],
