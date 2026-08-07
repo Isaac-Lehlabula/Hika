@@ -2,10 +2,12 @@ using Hika.Application.Common.Events;
 using Hika.Application.Common.Options;
 using Hika.Application.Common.Persistence;
 using Hika.Application.Common.Storage;
+using Hika.Application.Payments.Ports;
 using Hika.Application.Users.Ports;
 using Hika.Infrastructure.Common.Events;
 using Hika.Infrastructure.Identity;
 using Hika.Infrastructure.Notifications;
+using Hika.Infrastructure.Payments;
 using Hika.Infrastructure.Persistence;
 using Hika.Infrastructure.Security;
 using Hika.Infrastructure.Storage;
@@ -83,6 +85,7 @@ public static class DependencyInjection
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddScoped<ISmsSender, LoggingSmsSender>();
+        services.AddScoped<IPaymentGateway, MockPaymentGateway>();
         services.AddScoped<IFileStorage, LocalFileStorage>();
         // IHttpContextAccessor's concrete implementation lives in the full ASP.NET Core
         // shared framework, which this plain class library doesn't reference — registered in

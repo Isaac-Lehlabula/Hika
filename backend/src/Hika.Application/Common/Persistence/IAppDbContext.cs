@@ -1,5 +1,6 @@
 using Hika.Domain.Bookings;
 using Hika.Domain.Drivers;
+using Hika.Domain.Payments;
 using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
@@ -46,6 +47,10 @@ public interface IAppDbContext
     DbSet<BookingPassenger> BookingPassengers { get; }
 
     DbSet<BookingSegment> BookingSegments { get; }
+
+    DbSet<Payment> Payments { get; }
+
+    DbSet<Refund> Refunds { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 

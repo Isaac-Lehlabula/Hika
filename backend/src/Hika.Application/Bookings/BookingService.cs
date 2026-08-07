@@ -1,6 +1,7 @@
 using Hika.Application.Bookings.Dtos;
 using Hika.Application.Common.Exceptions;
 using Hika.Application.Common.Persistence;
+using Hika.Application.Payments;
 using Hika.Application.Trips;
 using Hika.Domain.Bookings;
 using Hika.Domain.Trips;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hika.Application.Bookings;
 
-public sealed class BookingService(IAppDbContext db) : IBookingService
+public sealed class BookingService(IAppDbContext db, IPaymentService paymentService) : IBookingService
 {
     public async Task<BookingResponse> RequestAsync(Guid passengerUserId, CreateBookingRequest request, CancellationToken cancellationToken)
     {
@@ -126,6 +127,12 @@ public sealed class BookingService(IAppDbContext db) : IBookingService
         var (booking, _) = await LoadOwnedByDriverAsync(driverUserId, bookingId, cancellationToken);
 
         booking.Accept();
+
+        // Payment capture happens here, not at request time, since a Pending booking might
+        // still be declined — see docs/domain-model.md §6 and Payment.cs. Added to the same
+        // unit of work as the Accept status change so both save atomically below.
+        await paymentService.CapturePaymentAsync(booking.Id, booking.TotalPrice, cancellationToken);
+
         await db.SaveChangesAsync(cancellationToken);
 
         return await BuildResponseAsync(booking.Id, cancellationToken)

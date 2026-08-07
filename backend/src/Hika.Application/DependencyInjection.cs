@@ -1,6 +1,7 @@
 using FluentValidation;
 using Hika.Application.Bookings;
 using Hika.Application.Drivers;
+using Hika.Application.Payments;
 using Hika.Application.Search;
 using Hika.Application.Trips;
 using Hika.Application.Users;
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<ITripService, TripService>();
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IPaymentService, PaymentService>();
 
         return services;
     }
