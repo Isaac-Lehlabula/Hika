@@ -1,4 +1,5 @@
 using Hika.Application.Common.Exceptions;
+using Hika.Application.Notifications;
 using Hika.Application.Trips;
 using Hika.Application.Trips.Dtos;
 using Hika.Domain.Common;
@@ -15,7 +16,7 @@ public class TripServiceTests
 
     public TripServiceTests()
     {
-        _sut = new TripService(_db);
+        _sut = new TripService(_db, new NotificationDispatcher(_db));
     }
 
     private async Task<(Guid DriverId, Guid VehicleId)> SeedDriverWithVehicleAsync(int seatCapacity = 4)

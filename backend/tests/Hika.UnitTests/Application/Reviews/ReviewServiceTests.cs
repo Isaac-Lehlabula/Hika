@@ -1,3 +1,4 @@
+using Hika.Application.Notifications;
 using Hika.Application.Reviews;
 using Hika.Domain.Reviews;
 using Hika.Domain.Users;
@@ -17,7 +18,7 @@ public class ReviewServiceTests
 
     public ReviewServiceTests()
     {
-        _sut = new ReviewService(_db);
+        _sut = new ReviewService(_db, new NotificationDispatcher(_db));
     }
 
     private async Task<Guid> SeedReviewedUserAsync()

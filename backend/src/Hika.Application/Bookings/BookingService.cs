@@ -1,15 +1,18 @@
 using Hika.Application.Bookings.Dtos;
 using Hika.Application.Common.Exceptions;
 using Hika.Application.Common.Persistence;
+using Hika.Application.Notifications;
 using Hika.Application.Payments;
 using Hika.Application.Trips;
 using Hika.Domain.Bookings;
+using Hika.Domain.Notifications;
 using Hika.Domain.Trips;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hika.Application.Bookings;
 
-public sealed class BookingService(IAppDbContext db, IPaymentService paymentService) : IBookingService
+public sealed class BookingService(IAppDbContext db, IPaymentService paymentService, INotificationDispatcher notificationDispatcher)
+    : IBookingService
 {
     public async Task<BookingResponse> RequestAsync(Guid passengerUserId, CreateBookingRequest request, CancellationToken cancellationToken)
     {
@@ -74,6 +77,13 @@ public sealed class BookingService(IAppDbContext db, IPaymentService paymentServ
         db.Bookings.Add(booking);
         db.BookingSegments.AddRange(segmentsInRange.Select(s => new BookingSegment(booking.Id, s.Id)));
 
+        await notificationDispatcher.DispatchAsync(
+            trip.DriverProfileId,
+            NotificationType.BookingRequested,
+            $"{passengerProfile.FirstName} {passengerProfile.LastName} requested {request.SeatsRequested} seat(s) on your trip.",
+            booking.Id,
+            cancellationToken);
+
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -133,6 +143,11 @@ public sealed class BookingService(IAppDbContext db, IPaymentService paymentServ
         // unit of work as the Accept status change so both save atomically below.
         await paymentService.CapturePaymentAsync(booking.Id, booking.TotalPrice, cancellationToken);
 
+        await notificationDispatcher.DispatchAsync(
+            booking.PassengerUserId, NotificationType.BookingAccepted, "Your booking request was accepted!", booking.Id, cancellationToken);
+        await notificationDispatcher.DispatchAsync(
+            booking.PassengerUserId, NotificationType.PaymentSucceeded, "Your payment was processed successfully.", booking.Id, cancellationToken);
+
         await db.SaveChangesAsync(cancellationToken);
 
         return await BuildResponseAsync(booking.Id, cancellationToken)
@@ -144,6 +159,8 @@ public sealed class BookingService(IAppDbContext db, IPaymentService paymentServ
         var (booking, trip) = await LoadOwnedByDriverAsync(driverUserId, bookingId, cancellationToken);
 
         booking.Decline();
+        await notificationDispatcher.DispatchAsync(
+            booking.PassengerUserId, NotificationType.BookingDeclined, "Your booking request was declined.", booking.Id, cancellationToken);
         await ReleaseSeatsAsync(trip.Id, booking.Id, booking.SeatsRequested, cancellationToken);
 
         return await BuildResponseAsync(booking.Id, cancellationToken)

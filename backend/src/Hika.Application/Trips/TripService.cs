@@ -1,14 +1,17 @@
 using Hika.Application.Common.Exceptions;
 using Hika.Application.Common.Persistence;
+using Hika.Application.Notifications;
 using Hika.Application.Trips.Dtos;
 using Hika.Domain.Common;
 using Hika.Domain.Drivers;
+using Hika.Domain.Notifications;
+using Hika.Domain.RideAlerts;
 using Hika.Domain.Trips;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hika.Application.Trips;
 
-public sealed class TripService(IAppDbContext db) : ITripService
+public sealed class TripService(IAppDbContext db, INotificationDispatcher notificationDispatcher) : ITripService
 {
     public async Task<TripResponse> CreateAsync(Guid driverUserId, CreateTripRequest request, CancellationToken cancellationToken)
     {
@@ -45,10 +48,54 @@ public sealed class TripService(IAppDbContext db) : ITripService
             stopInputs);
 
         db.Trips.Add(trip);
+        await MatchRideAlertsAsync(trip, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
 
         return await BuildResponseAsync(trip.Id, cancellationToken)
             ?? throw new InvalidOperationException("Trip was created but could not be re-read.");
+    }
+
+    /// <summary>"Notify me when someone posts JHB → Giyani" — matched the same way search
+    /// matches a trip's stops (RawName substring, ordered), see docs/domain-model.md §8. Fires
+    /// once per alert then marks it Fulfilled; a rider who wants to keep watching creates a
+    /// new one (see RideAlert.MarkFulfilled).</summary>
+    private async Task MatchRideAlertsAsync(Trip trip, CancellationToken cancellationToken)
+    {
+        var activeAlerts = await db.RideAlerts.Where(a => a.Status == RideAlertStatus.Active).ToListAsync(cancellationToken);
+        if (activeAlerts.Count == 0)
+        {
+            return;
+        }
+
+        // South Africa runs UTC+2 year-round (no DST) — see docs/south-africa.md.
+        var tripDepartureDate = DateOnly.FromDateTime(trip.DepartureAtUtc.ToOffset(TimeSpan.FromHours(2)).DateTime);
+
+        foreach (var alert in activeAlerts)
+        {
+            var origin = alert.OriginRawText.ToLowerInvariant();
+            var destination = alert.DestinationRawText.ToLowerInvariant();
+
+            var originStop = trip.Stops.FirstOrDefault(s => s.RawName.ToLowerInvariant().Contains(origin));
+            var destinationStop = trip.Stops.FirstOrDefault(s => s.RawName.ToLowerInvariant().Contains(destination));
+
+            if (originStop is null || destinationStop is null || originStop.Sequence >= destinationStop.Sequence)
+            {
+                continue;
+            }
+
+            if (alert.TravelDate is { } travelDate && travelDate != tripDepartureDate)
+            {
+                continue;
+            }
+
+            alert.MarkFulfilled();
+            await notificationDispatcher.DispatchAsync(
+                alert.UserId,
+                NotificationType.RideAlertMatched,
+                $"A trip matching your alert ({alert.OriginRawText} → {alert.DestinationRawText}) was just posted!",
+                trip.Id,
+                cancellationToken);
+        }
     }
 
     public async Task<TripResponse> GetAsync(Guid tripId, CancellationToken cancellationToken) =>
@@ -87,8 +134,11 @@ public sealed class TripService(IAppDbContext db) : ITripService
             throw new NotFoundException(nameof(Trip), tripId);
         }
 
-        // Phase 6 will additionally decline pending bookings and trigger refunds for confirmed
-        // ones when a trip is cancelled — not needed yet since bookings don't exist until then.
+        // Deliberately not yet cascading to Bookings/Payments here: declining pending bookings,
+        // releasing their held seats, and refunding confirmed ones on trip cancellation is a
+        // real gap (tracked in docs/roadmap.md), but the policy questions it raises (does the
+        // driver owe a refund? partial vs. full?) belong with Trust & Safety (Phase 10) or
+        // hardening, not bolted on here without that design.
         trip.Cancel();
         await db.SaveChangesAsync(cancellationToken);
     }

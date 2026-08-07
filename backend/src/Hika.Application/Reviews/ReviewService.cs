@@ -1,15 +1,17 @@
 using Hika.Application.Common.Exceptions;
 using Hika.Application.Common.Pagination;
 using Hika.Application.Common.Persistence;
+using Hika.Application.Notifications;
 using Hika.Application.Reviews.Dtos;
 using Hika.Domain.Bookings;
+using Hika.Domain.Notifications;
 using Hika.Domain.Reviews;
 using Hika.Domain.Trips;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hika.Application.Reviews;
 
-public sealed class ReviewService(IAppDbContext db) : IReviewService
+public sealed class ReviewService(IAppDbContext db, INotificationDispatcher notificationDispatcher) : IReviewService
 {
     private const int DefaultPageSize = 20;
     private const int MaxPageSize = 100;
@@ -61,6 +63,13 @@ public sealed class ReviewService(IAppDbContext db) : IReviewService
         db.Reviews.Add(review);
 
         revieweeProfile.RecordCompletedTripReview(request.Rating);
+
+        await notificationDispatcher.DispatchAsync(
+            revieweeUserId,
+            NotificationType.NewReview,
+            $"{reviewerProfile.FirstName} left you a {request.Rating}-star review.",
+            review.Id,
+            cancellationToken);
 
         await db.SaveChangesAsync(cancellationToken);
 

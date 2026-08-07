@@ -2,8 +2,10 @@ using Hika.Application.Common.Persistence;
 using Hika.Domain.Bookings;
 using Hika.Domain.Common;
 using Hika.Domain.Drivers;
+using Hika.Domain.Notifications;
 using Hika.Domain.Payments;
 using Hika.Domain.Reviews;
+using Hika.Domain.RideAlerts;
 using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
@@ -54,6 +56,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Refund> Refunds => Set<Refund>();
 
     public DbSet<Review> Reviews => Set<Review>();
+
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<RideAlert> RideAlerts => Set<RideAlert>();
 
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken) =>
         Database.BeginTransactionAsync(cancellationToken);
