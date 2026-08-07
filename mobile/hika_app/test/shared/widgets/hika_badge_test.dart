@@ -30,4 +30,24 @@ void main() {
 
     expect(find.text('Not submitted'), findsOneWidget);
   });
+
+  testWidgets('toTripStatusBadge maps each backend status to the right label', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        Column(
+          children: [
+            'Scheduled'.toTripStatusBadge(),
+            'InProgress'.toTripStatusBadge(),
+            'Completed'.toTripStatusBadge(),
+            'Cancelled'.toTripStatusBadge(),
+          ],
+        ),
+      ),
+    );
+
+    expect(find.text('Scheduled'), findsOneWidget);
+    expect(find.text('In progress'), findsOneWidget);
+    expect(find.text('Completed'), findsOneWidget);
+    expect(find.text('Cancelled'), findsOneWidget);
+  });
 }

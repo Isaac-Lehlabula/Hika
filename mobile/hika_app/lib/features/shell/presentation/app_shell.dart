@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/hika_empty_state.dart';
 import '../../home/presentation/screens/home_screen.dart';
 import '../../profile/presentation/screens/profile_screen.dart';
+import '../../trips/presentation/screens/my_trips_screen.dart';
 
 /// Bottom-nav shell: Home, Trips, Bookings, Inbox, Profile — five tabs per
-/// the product brief's "don't create too many tabs" guidance. Trips/
-/// Bookings/Inbox are honest "coming soon" states (see docs/roadmap.md)
-/// rather than placeholder screens pretending to be finished features.
+/// the product brief's "don't create too many tabs" guidance. Trips shows
+/// posted trips now that trip posting exists; Bookings/Inbox stay honest
+/// "coming soon" states (see docs/roadmap.md) until bookings/notifications land.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -30,11 +31,7 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final pages = [
       const HomeScreen(),
-      const _ComingSoonTab(
-        icon: Icons.route_outlined,
-        title: 'Your trips',
-        message: 'Trips you post or book will show up here once trip posting and search are live.',
-      ),
+      const MyTripsScreen(),
       const _ComingSoonTab(
         icon: Icons.event_seat_outlined,
         title: 'Bookings',

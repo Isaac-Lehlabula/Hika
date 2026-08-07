@@ -4,6 +4,7 @@ import '../features/auth/data/auth_api.dart';
 import '../features/auth/presentation/providers/auth_controller.dart';
 import '../features/drivers/data/drivers_api.dart';
 import '../features/profile/data/profile_api.dart';
+import '../features/trips/data/trips_api.dart';
 import 'networking/api_client.dart';
 import 'storage/token_storage.dart';
 
@@ -23,3 +24,5 @@ final authApiProvider = Provider<AuthApi>((ref) => AuthApi(ref.watch(apiClientPr
 final profileApiProvider = Provider<ProfileApi>((ref) => ProfileApi(ref.watch(apiClientProvider)));
 
 final driversApiProvider = Provider<DriversApi>((ref) => DriversApi(ref.watch(apiClientProvider)));
+
+final tripsApiProvider = Provider<TripsApi>((ref) => TripsApi(ref.watch(apiClientProvider)));

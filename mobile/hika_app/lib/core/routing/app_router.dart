@@ -14,6 +14,8 @@ import '../../features/drivers/presentation/screens/vehicle_detail_screen.dart';
 import '../../features/drivers/presentation/screens/vehicles_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/shell/presentation/splash_screen.dart';
+import '../../features/trips/presentation/screens/post_trip_screen.dart';
+import '../../features/trips/presentation/screens/trip_detail_screen.dart';
 
 const _authRoutes = {'/login', '/register', '/verify-email', '/forgot-password', '/reset-password'};
 
@@ -58,6 +60,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/vehicles/:id',
         builder: (context, state) => VehicleDetailScreen(vehicleId: state.pathParameters['id']!),
+      ),
+      GoRoute(path: '/trips/new', builder: (context, state) => const PostTripScreen()),
+      GoRoute(
+        path: '/trips/:id',
+        builder: (context, state) => TripDetailScreen(tripId: state.pathParameters['id']!),
       ),
     ],
   );

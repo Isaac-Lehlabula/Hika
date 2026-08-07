@@ -10,7 +10,7 @@ Each phase: explain → implement (backend + mobile together, from Phase 2 on) �
 | 1 | Backend solution/infra scaffolding — projects, Serilog, health checks, OpenAPI, EF plumbing, CORS | ✅ Done |
 | 2 | **Auth & users** — backend: registration, login, logout, email/phone verification, refresh tokens, password reset, profile. Mobile: Flutter scaffold (design system, networking, secure token storage), Register/Login/VerifyEmail/VerifyPhone/ForgotPassword/ResetPassword/Profile screens. | ✅ Done |
 | 3 | **Driver profiles & vehicles** — backend: driver profile, vehicle CRUD, verification submission. Mobile: "Become a driver" flow, vehicle management screens. | ✅ Done |
-| 4 | **Trips, stops, segments** — backend: post a trip, intermediate stops, segment inventory creation. Mobile: guided "post a trip" flow, trip detail screen. | 🔶 Backend done, mobile pending |
+| 4 | **Trips, stops, segments** — backend: post a trip, intermediate stops, segment inventory creation. Mobile: guided "post a trip" flow, trip detail screen. | ✅ Done |
 | 5 | **Search** — backend: Find a Hike query, filters/sorting, location autocomplete. Mobile: home screen search, results list with trip cards. | ⬜ Not started |
 | 6 | **Bookings & seat inventory** — backend: request/accept/decline, concurrency-safe reservation, cancellation. Mobile: reserve-seat flow, driver's incoming-requests screen. | ⬜ Not started |
 | 7 | **Payments abstraction** — backend: `IPaymentGateway`, mock provider, fare/fee/payout split, refunds. Mobile: payment status/receipt UI. | ⬜ Not started |
@@ -23,8 +23,8 @@ Each phase: explain → implement (backend + mobile together, from Phase 2 on) �
 ## What's runnable today
 
 - Backend: `docker compose up -d postgres mailhog`, then `dotnet run --project backend/src/Hika.Api` — auth (register → verify email → verify phone OTP → login → refresh → profile edit → logout), driver profile/vehicle/photo/verification-submission flows, and trip posting (locations, ordered stops, per-adjacent-stop-pair segment inventory, get/list/cancel) all work end-to-end against a real Postgres database. 104 automated tests passing (76 unit, 28 integration against a real Postgres via Testcontainers).
-- Mobile: `flutter run` (see `mobile/hika_app/README.md`) — auth screens plus "Become a driver" (license details, license photo submission), vehicle management (add/view/delete, photo upload with a primary-photo picker, registration-document submission), all wired to the real backend and verified end-to-end. Home shows the flagship search UI (not yet wired to a backend); Trips/Bookings/Inbox show honest "coming soon" states; bottom-nav shell in place.
+- Mobile: `flutter run` (see `mobile/hika_app/README.md`) — auth screens, "Become a driver" (license details, license photo submission), vehicle management (add/view/delete, photo upload with a primary-photo picker, registration-document submission), and trip posting (a guided 4-step "post a trip" flow — vehicle, route, details, review — plus a trip-detail screen with cancel) are all wired to the real backend and verified end-to-end. The Trips tab shows the driver's posted trips. Home shows the flagship search UI (not yet wired to a backend); Bookings/Inbox show honest "coming soon" states; bottom-nav shell in place. 20 automated widget/unit tests passing.
 
 ## Next up
 
-**Phase 4 mobile** — the guided "post a trip" flow (vehicle picker → ordered stops → seats/price/luggage/notes → review) and a trustworthy trip-detail screen, wired to the trip endpoints that now exist. Then **Phase 5 — Search**.
+**Phase 5 — Search**: backend Find-a-Hike query with filters/sorting and location autocomplete (the seeded `Location` table finally gets an endpoint), mobile home-screen search wired to it with a polished trip-card results list.

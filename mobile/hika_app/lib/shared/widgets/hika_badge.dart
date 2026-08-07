@@ -55,4 +55,14 @@ extension VerificationStatusBadge on String {
       _ => const HikaBadge(label: 'Not submitted', tone: HikaBadgeTone.neutral, icon: Icons.upload_file_rounded),
     };
   }
+
+  /// Maps a backend TripStatus string ("Scheduled"/"InProgress"/"Completed"/"Cancelled") to a badge.
+  HikaBadge toTripStatusBadge() {
+    return switch (this) {
+      'InProgress' => const HikaBadge(label: 'In progress', tone: HikaBadgeTone.warning, icon: Icons.directions_car_filled_rounded),
+      'Completed' => const HikaBadge(label: 'Completed', tone: HikaBadgeTone.success, icon: Icons.check_circle_rounded),
+      'Cancelled' => const HikaBadge(label: 'Cancelled', tone: HikaBadgeTone.danger, icon: Icons.cancel_rounded),
+      _ => const HikaBadge(label: 'Scheduled', tone: HikaBadgeTone.neutral, icon: Icons.schedule_rounded),
+    };
+  }
 }
