@@ -1,8 +1,10 @@
 using Hika.Api.Common;
+using Hika.Api.RateLimiting;
 using Hika.Application.Users;
 using Hika.Application.Users.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Hika.Api.Controllers;
 
@@ -20,6 +22,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.AuthPolicy)]
     public async Task<ActionResult<AuthTokenResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
         var response = await authService.LoginAsync(request, GetClientIp(), GetDeviceInfo(), cancellationToken);
@@ -60,6 +63,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
 
     [HttpPost("request-phone-otp")]
     [Authorize]
+    [EnableRateLimiting(RateLimitingExtensions.AuthPolicy)]
     public async Task<IActionResult> RequestPhoneOtp(RequestPhoneOtpRequest request, CancellationToken cancellationToken)
     {
         await authService.RequestPhoneOtpAsync(User.GetUserId(), request.PhoneNumber, cancellationToken);
@@ -68,6 +72,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
 
     [HttpPost("verify-phone")]
     [Authorize]
+    [EnableRateLimiting(RateLimitingExtensions.AuthPolicy)]
     public async Task<IActionResult> VerifyPhone(VerifyPhoneRequest request, CancellationToken cancellationToken)
     {
         await authService.VerifyPhoneAsync(User.GetUserId(), request.Code, cancellationToken);
@@ -76,6 +81,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
 
     [HttpPost("forgot-password")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.AuthPolicy)]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
         // Always 202, regardless of whether the email is registered — avoids account enumeration.
@@ -85,6 +91,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
 
     [HttpPost("reset-password")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.AuthPolicy)]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
     {
         await authService.ResetPasswordAsync(request, cancellationToken);

@@ -7,7 +7,7 @@
 - Refresh tokens: opaque random values, **stored hashed** (SHA-256) — a DB leak doesn't hand out usable tokens. Rotated on every use; reuse of an already-rotated token revokes the entire token family (classic theft-detection pattern) and is logged as a security event.
 - Lockout: ASP.NET Core Identity's built-in lockout (configurable failed-attempt threshold + cool-down) on login and OTP verification.
 - Email/phone verification and password-reset tokens are all hashed at rest and expire quickly (verification links: 24h; OTP codes: 10 min; password reset: 1h).
-- **Client-side token storage**: the Flutter app stores access/refresh tokens in OS-backed secure storage (Android Keystore / iOS Keychain via `flutter_secure_storage`) — never plain preferences/local files. See `mobile-architecture.md` §5. The future Next.js admin portal, being a browser app, would instead use httpOnly/`Secure`/`SameSite` cookies via a thin server-side proxy (the BFF pattern) rather than `localStorage`, since a browser's threat model (XSS) differs from a native app's (device/storage compromise) — see `admin-portal.md`.
+- **Client-side token storage**: the Flutter app stores access/refresh tokens in OS-backed secure storage (Android Keystore / iOS Keychain via `flutter_secure_storage`) — never plain preferences/local files. See `mobile-architecture.md` §5. The Next.js admin portal, being a browser app, instead uses httpOnly/`SameSite=Lax` cookies set by Server Actions (never `localStorage`) — every backend call is server-side (a Server Component fetch or a Server Action), so the token never reaches client-side JavaScript at all. See `admin-portal.md`.
 
 ## Authorization
 
@@ -35,9 +35,11 @@
 
 ## Rate limiting & abuse prevention
 
-- ASP.NET Core's built-in rate limiter (`Microsoft.AspNetCore.RateLimiting`) applied to auth endpoints (login, OTP request/verify, password reset) — these are the classic brute-force/enumeration targets.
+- ASP.NET Core's built-in rate limiter (`Microsoft.AspNetCore.RateLimiting`, see `Hika.Api/RateLimiting/`) applied via two named, configuration-driven policies:
+  - `auth` — login, phone-OTP request/verify, and password-reset request/confirm, partitioned by caller IP (all anonymous-accessible), default 10 requests/60s. These are the classic brute-force/enumeration targets.
+  - `reports` — filing a report and blocking/unblocking a user, partitioned by the caller's user id (all `[Authorize]`-gated), default 20 requests/60s, to reduce harassment-via-reporting abuse.
+  - Limits are `IOptionsMonitor`-backed (`RateLimiting:*` config), not baked in at startup — a rejected request gets a `ProblemDetails`-shaped 429, consistent with every other error response's shape. Integration tests override both to an effectively unlimited value (`CustomWebApplicationFactory`) except one dedicated test class that dials `auth` down to 3/window specifically to exercise the real 429 path.
 - `forgot-password` always returns 202 regardless of whether the email exists, to avoid account enumeration.
-- Report/block endpoints are rate-limited per user to reduce harassment-via-reporting abuse.
 
 ## Auditability
 
@@ -50,9 +52,17 @@
 - Local dev: `.env` (Docker Compose) or `dotnet user-secrets` (running the API outside Docker).
 - Production (future): a real secret store (Azure Key Vault / AWS Secrets Manager / Doppler, depending on eventual hosting choice) injected as environment variables at deploy time — the app code doesn't need to change, only where configuration values come from, because it already reads from `IConfiguration` layered over env vars.
 
+## CI & dependency scanning
+
+- `.github/workflows/{backend,mobile,admin}.yml` — build/test (backend: `dotnet test`, including the Testcontainers-backed integration suite; mobile: `flutter analyze` + `flutter test`; admin: `next lint` + `next build`) on every push/PR touching that app, path-filtered so an admin-only change doesn't re-run the backend suite and vice versa.
+- `.github/dependabot.yml` — weekly grouped update PRs for NuGet (backend), npm (admin), pub (mobile), and the GitHub Actions themselves. Grouped (one PR per ecosystem per week) rather than one-PR-per-package, since the latter turns into unreviewable noise on a repo this size.
+- Both are dormant until the repo has a GitHub remote to run against — see `roadmap.md`.
+
 ## Known gaps to close before a real launch (tracked, not hidden)
 
 - Real identity/document verification provider (currently: admin manually reviews an uploaded document URL) — see `south-africa.md`.
 - Real SMS provider for OTP (currently: logged, not actually sent) — see `south-africa.md`.
-- Formal penetration test / dependency vulnerability scanning in CI once there is a CI pipeline (Phase 12).
+- Real payment gateway (currently: `MockPaymentGateway`, auto-succeeds) — see `south-africa.md` for candidate SA providers (PayFast, Yoco, Peach Payments, Ozow). Needs real merchant credentials this environment doesn't have.
+- Formal penetration test — CI now exists (see above) but a scanner still needs to be wired into it (e.g. GitHub code scanning / `dotnet list package --vulnerable` as a CI step) and an actual pentest is a separate, later exercise.
+- App-store release prep (signing, store listings, screenshots) — needs Apple/Google developer accounts this environment doesn't have; see `roadmap.md`'s Phase 12 note.
 - Live location sharing (mentioned as a later feature) needs its own explicit privacy design (who can see it, for how long, opt-in) before being built — not scoped into the current phases.

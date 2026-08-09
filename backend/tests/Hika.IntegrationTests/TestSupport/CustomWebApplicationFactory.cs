@@ -16,7 +16,7 @@ namespace Hika.IntegrationTests.TestSupport;
 /// it, with the email/SMS senders swapped for in-memory capturing fakes so tests can assert on
 /// what would have been sent without needing Mailhog or a real SMTP/SMS provider running.
 /// </summary>
-public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
         .WithDatabase("hika_test")
@@ -43,6 +43,14 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 ["Smtp:From"] = "no-reply@hika.local",
                 ["LocalFileStorage:RootPath"] = Path.Combine(Path.GetTempPath(), "hika-integration-tests", Guid.NewGuid().ToString("N")),
                 ["LocalFileStorage:PublicBaseUrl"] = "http://localhost",
+
+                // TestServer gives every in-memory request the same loopback RemoteIpAddress,
+                // so the "auth" rate-limit policy's per-IP partition would otherwise see every
+                // test in a class (often dozens of CreateAuthenticatedClientAsync calls sharing
+                // this one factory) as a single caller. Effectively unlimited here; see
+                // RateLimitingEndpointsTests for the dedicated test that exercises the real limits.
+                ["RateLimiting:AuthPermitLimit"] = "100000",
+                ["RateLimiting:ReportsPermitLimit"] = "100000",
             });
         });
 

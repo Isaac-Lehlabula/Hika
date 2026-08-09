@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Hika.Api.Authorization;
 using Hika.Api.Middleware;
+using Hika.Api.RateLimiting;
 using Hika.Application;
 using Hika.Application.Users.Ports;
 using Hika.Infrastructure;
@@ -94,6 +95,8 @@ try
 
     builder.Services.AddHttpContextAccessor();
 
+    builder.Services.AddHikaRateLimiting(builder.Configuration);
+
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -136,6 +139,10 @@ try
 
     app.UseAuthentication();
     app.UseAuthorization();
+
+    // After UseAuthorization so the "reports" policy's per-user partitioning can read
+    // HttpContext.User — it's already populated by this point in the pipeline.
+    app.UseRateLimiter();
 
     app.MapControllers();
 

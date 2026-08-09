@@ -25,6 +25,10 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
 
         builder.HasIndex(b => b.TripId);
         builder.HasIndex(b => new { b.PassengerUserId, b.Status });
+        // Supports AdminBookingService's status-filtered, RequestedAtUtc-sorted list — the
+        // (PassengerUserId, Status) index above doesn't help a Status-only filter (Status isn't
+        // the leftmost column), same reasoning as Trip's (Status, DepartureAtUtc) index.
+        builder.HasIndex(b => new { b.Status, b.RequestedAtUtc });
 
         builder.HasOne<Trip>().WithMany().HasForeignKey(b => b.TripId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<UserProfile>().WithMany().HasForeignKey(b => b.PassengerUserId).OnDelete(DeleteBehavior.Restrict);

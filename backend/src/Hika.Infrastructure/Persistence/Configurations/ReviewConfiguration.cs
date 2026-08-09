@@ -18,6 +18,9 @@ public sealed class ReviewConfiguration : IEntityTypeConfiguration<Review>
 
         builder.HasIndex(r => new { r.BookingId, r.ReviewerUserId }).IsUnique();
         builder.HasIndex(r => r.RevieweeUserId);
+        // Supports AdminReviewService's unfiltered, CreatedAtUtc-sorted list — same reasoning
+        // as AuditLog's CreatedAtUtc index.
+        builder.HasIndex(r => r.CreatedAtUtc);
 
         builder.HasOne<Booking>().WithMany().HasForeignKey(r => r.BookingId).OnDelete(DeleteBehavior.Restrict);
     }

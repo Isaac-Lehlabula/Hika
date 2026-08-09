@@ -34,6 +34,8 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         });
 
         builder.HasIndex(p => p.BookingId).IsUnique();
+        // Supports AdminPaymentService's status-filtered, CreatedAtUtc-sorted list.
+        builder.HasIndex(p => new { p.Status, p.CreatedAtUtc });
 
         builder.HasOne<Booking>().WithMany().HasForeignKey(p => p.BookingId).OnDelete(DeleteBehavior.Restrict);
     }
