@@ -19,4 +19,12 @@ public interface IBookingService
     Task<BookingResponse> CancelAsync(Guid passengerUserId, Guid bookingId, string? reason, CancellationToken cancellationToken);
 
     Task<BookingResponse> CompleteAsync(Guid driverUserId, Guid bookingId, CancellationToken cancellationToken);
+
+    /// <summary>Applies a payment outcome to an AwaitingPayment booking — called inline by
+    /// AcceptAsync when the gateway settles synchronously (Mock), and by
+    /// OzowWebhooksController when it arrives later over a notify webhook. A no-op (returns the
+    /// booking as-is) if the booking has already moved past AwaitingPayment, so a retried
+    /// webhook delivery can't double-apply a state change.</summary>
+    Task<BookingResponse> ResolvePaymentOutcomeAsync(
+        Guid bookingId, bool succeeded, string? providerReference, CancellationToken cancellationToken);
 }

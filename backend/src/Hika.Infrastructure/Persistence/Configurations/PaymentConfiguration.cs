@@ -16,6 +16,7 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.Provider).HasConversion<string>().HasMaxLength(20);
         builder.Property(p => p.Status).HasConversion<string>().HasMaxLength(20);
         builder.Property(p => p.ProviderReference).HasMaxLength(100);
+        builder.Property(p => p.RedirectUrl).HasMaxLength(2048);
 
         builder.ComplexProperty(p => p.Amount, money =>
         {

@@ -18,5 +18,9 @@ public sealed record PaymentResponse
 
     public required string Status { get; init; }
 
+    /// <summary>Set only while Status is Pending on a redirect-based gateway (Ozow) — the
+    /// client should open this externally and complete payment, then re-poll this endpoint.</summary>
+    public string? RedirectUrl { get; init; }
+
     public required DateTimeOffset CreatedAtUtc { get; init; }
 }

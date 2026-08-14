@@ -8,6 +8,7 @@ using Hika.Infrastructure.Common.Events;
 using Hika.Infrastructure.Identity;
 using Hika.Infrastructure.Notifications;
 using Hika.Infrastructure.Payments;
+using Hika.Infrastructure.Payments.Ozow;
 using Hika.Infrastructure.Persistence;
 using Hika.Infrastructure.Security;
 using Hika.Infrastructure.Storage;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Hika.Infrastructure;
 
@@ -81,11 +83,34 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        // Not .ValidateOnStart() — an empty SiteCode is the valid "Ozow isn't configured yet"
+        // state (see OzowOptions), not a startup-blocking misconfiguration.
+        services.AddOptions<OzowOptions>()
+            .Bind(configuration.GetSection(OzowOptions.SectionName));
+        services.AddScoped<OzowNotifyVerifier>();
+
         services.AddScoped<IUserAccountService, UserAccountService>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddScoped<ISmsSender, LoggingSmsSender>();
-        services.AddScoped<IPaymentGateway, MockPaymentGateway>();
+
+        // Real Ozow only once real credentials are configured (see OzowOptions) — every
+        // deployment without them, including every automated test, keeps getting Mock's
+        // synchronous auto-succeed behavior, unchanged from before Ozow existed.
+        var ozowSiteCode = configuration[$"{OzowOptions.SectionName}:{nameof(OzowOptions.SiteCode)}"];
+        if (!string.IsNullOrWhiteSpace(ozowSiteCode))
+        {
+            services.AddHttpClient<IPaymentGateway, OzowPaymentGateway>((sp, client) =>
+            {
+                var ozowOptions = sp.GetRequiredService<IOptions<OzowOptions>>().Value;
+                client.BaseAddress = new Uri(ozowOptions.ApiBaseUrl);
+            });
+        }
+        else
+        {
+            services.AddScoped<IPaymentGateway, MockPaymentGateway>();
+        }
+
         services.AddScoped<IFileStorage, LocalFileStorage>();
         // IHttpContextAccessor's concrete implementation lives in the full ASP.NET Core
         // shared framework, which this plain class library doesn't reference — registered in

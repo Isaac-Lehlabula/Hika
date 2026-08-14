@@ -6,12 +6,22 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- So Hika.UnitTests can exercise OzowHashHelper directly — a pure, deterministic
+         function worth testing on its own, without making it part of any public API — and so
+         Hika.IntegrationTests can use the same helper to sign webhook payloads in its Ozow
+         tests instead of a second, potentially-drifting reimplementation of the algorithm. -->
+    <InternalsVisibleTo Include="Hika.UnitTests" />
+    <InternalsVisibleTo Include="Hika.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
     <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.11" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.10" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />

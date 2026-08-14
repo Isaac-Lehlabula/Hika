@@ -27,23 +27,61 @@ public class BookingTests
     }
 
     [Fact]
-    public void Accept_PendingBooking_BecomesConfirmed()
+    public void Accept_PendingBooking_BecomesAwaitingPayment()
     {
         var booking = NewBooking();
 
         booking.Accept();
 
-        booking.Status.ShouldBe(BookingStatus.Confirmed);
+        booking.Status.ShouldBe(BookingStatus.AwaitingPayment);
         booking.RespondedAtUtc.ShouldNotBeNull();
     }
 
     [Fact]
-    public void Accept_AlreadyConfirmedBooking_Throws()
+    public void Accept_AlreadyAcceptedBooking_Throws()
     {
         var booking = NewBooking();
         booking.Accept();
 
         Should.Throw<InvalidOperationException>(() => booking.Accept());
+    }
+
+    [Fact]
+    public void ConfirmPayment_AwaitingPaymentBooking_BecomesConfirmed()
+    {
+        var booking = NewBooking();
+        booking.Accept();
+
+        booking.ConfirmPayment();
+
+        booking.Status.ShouldBe(BookingStatus.Confirmed);
+    }
+
+    [Fact]
+    public void ConfirmPayment_PendingBooking_Throws()
+    {
+        var booking = NewBooking();
+
+        Should.Throw<InvalidOperationException>(() => booking.ConfirmPayment());
+    }
+
+    [Fact]
+    public void FailPayment_AwaitingPaymentBooking_BecomesDeclined()
+    {
+        var booking = NewBooking();
+        booking.Accept();
+
+        booking.FailPayment();
+
+        booking.Status.ShouldBe(BookingStatus.Declined);
+    }
+
+    [Fact]
+    public void FailPayment_PendingBooking_Throws()
+    {
+        var booking = NewBooking();
+
+        Should.Throw<InvalidOperationException>(() => booking.FailPayment());
     }
 
     [Fact]
@@ -58,7 +96,7 @@ public class BookingTests
     }
 
     [Fact]
-    public void Decline_AlreadyConfirmedBooking_Throws()
+    public void Decline_AfterAccepted_Throws()
     {
         var booking = NewBooking();
         booking.Accept();
@@ -79,10 +117,22 @@ public class BookingTests
     }
 
     [Fact]
+    public void Cancel_AwaitingPaymentBooking_BecomesCancelled()
+    {
+        var booking = NewBooking();
+        booking.Accept();
+
+        booking.Cancel(null);
+
+        booking.Status.ShouldBe(BookingStatus.Cancelled);
+    }
+
+    [Fact]
     public void Cancel_ConfirmedBooking_BecomesCancelled()
     {
         var booking = NewBooking();
         booking.Accept();
+        booking.ConfirmPayment();
 
         booking.Cancel(null);
 
@@ -103,6 +153,7 @@ public class BookingTests
     {
         var booking = NewBooking();
         booking.Accept();
+        booking.ConfirmPayment();
 
         booking.Complete();
 

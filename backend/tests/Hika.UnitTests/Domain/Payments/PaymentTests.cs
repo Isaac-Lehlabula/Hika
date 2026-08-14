@@ -12,7 +12,7 @@ public class PaymentTests
     [Fact]
     public void Charge_SplitsFareIntoPlatformFeeAndDriverPayout()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(1000m), FeeRate);
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(1000m), FeeRate, PaymentProvider.Mock);
 
         payment.Amount.Amount.ShouldBe(1000m);
         payment.PlatformFee.Amount.ShouldBe(150m);
@@ -23,7 +23,7 @@ public class PaymentTests
     [Fact]
     public void Charge_PlatformFeePlusPayout_AlwaysEqualsFare()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(333.33m), FeeRate);
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(333.33m), FeeRate, PaymentProvider.Mock);
 
         (payment.PlatformFee.Amount + payment.DriverPayoutAmount.Amount).ShouldBe(payment.Amount.Amount);
     }
@@ -31,7 +31,7 @@ public class PaymentTests
     [Fact]
     public void MarkSucceeded_PendingPayment_SetsStatusAndReference()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate, PaymentProvider.Mock);
 
         payment.MarkSucceeded("MOCK-ABC123");
 
@@ -42,7 +42,7 @@ public class PaymentTests
     [Fact]
     public void MarkSucceeded_AlreadySucceededPayment_Throws()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate, PaymentProvider.Mock);
         payment.MarkSucceeded("MOCK-ABC123");
 
         Should.Throw<InvalidOperationException>(() => payment.MarkSucceeded("MOCK-XYZ789"));
@@ -51,7 +51,7 @@ public class PaymentTests
     [Fact]
     public void MarkFailed_PendingPayment_SetsStatusToFailed()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate, PaymentProvider.Mock);
 
         payment.MarkFailed();
 
@@ -61,7 +61,7 @@ public class PaymentTests
     [Fact]
     public void MarkRefunded_SucceededPayment_SetsStatusToRefunded()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate, PaymentProvider.Mock);
         payment.MarkSucceeded("MOCK-ABC123");
 
         payment.MarkRefunded();
@@ -72,8 +72,29 @@ public class PaymentTests
     [Fact]
     public void MarkRefunded_PendingPayment_Throws()
     {
-        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate);
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate, PaymentProvider.Mock);
 
         Should.Throw<InvalidOperationException>(() => payment.MarkRefunded());
+    }
+
+    [Fact]
+    public void SetRedirectUrl_PendingPayment_SetsUrl()
+    {
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate, PaymentProvider.Ozow);
+
+        payment.SetRedirectUrl("https://pay.ozow.com/abc123");
+
+        payment.RedirectUrl.ShouldBe("https://pay.ozow.com/abc123");
+    }
+
+    [Fact]
+    public void MarkSucceeded_ClearsRedirectUrl()
+    {
+        var payment = Payment.Charge(Guid.NewGuid(), new Money(300m), FeeRate, PaymentProvider.Ozow);
+        payment.SetRedirectUrl("https://pay.ozow.com/abc123");
+
+        payment.MarkSucceeded("OZOW-TXN-1");
+
+        payment.RedirectUrl.ShouldBeNull();
     }
 }

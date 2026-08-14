@@ -21,6 +21,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Hika.Domain\Hika.Domain.csproj" />
     <ProjectReference Include="..\..\src\Hika.Application\Hika.Application.csproj" />
+    <!-- Narrow exception to "Infrastructure is integration-tested only" — OzowHashHelper and
+         OzowNotifyVerifier are pure, deterministic logic with no external dependency
+         (no DB, no network), so they belong in the fast unit suite like anything else that
+         shape, not gated behind Docker/Testcontainers just because of which project they live in. -->
+    <ProjectReference Include="..\..\src\Hika.Infrastructure\Hika.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

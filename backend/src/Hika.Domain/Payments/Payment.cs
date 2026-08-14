@@ -5,6 +5,7 @@ namespace Hika.Domain.Payments;
 public enum PaymentProvider
 {
     Mock,
+    Ozow,
 }
 
 public enum PaymentStatus
@@ -38,6 +39,13 @@ public sealed class Payment : AuditableEntity
 
     public string? ProviderReference { get; private set; }
 
+    /// <summary>Set only while Status is Pending and the gateway is redirect-based (Ozow) — the
+    /// mobile client re-fetches this via GET /bookings/{id}/payment (the driver-accept response
+    /// itself goes to the driver, not the passenger who actually needs this URL) and opens it
+    /// externally. Null for synchronously-settling gateways (Mock), which never leave the
+    /// Pending state observable to a caller.</summary>
+    public string? RedirectUrl { get; private set; }
+
     public PaymentStatus Status { get; private set; }
 
     private Payment()
@@ -49,7 +57,7 @@ public sealed class Payment : AuditableEntity
 
     /// <param name="feeRate">The platform's cut as a fraction (e.g. 0.15 for 15%) — see
     /// Hika.Domain.Admin.PlatformFeeSettings, the admin-configurable source of this value.</param>
-    public static Payment Charge(Guid bookingId, Money fare, decimal feeRate)
+    public static Payment Charge(Guid bookingId, Money fare, decimal feeRate, PaymentProvider provider)
     {
         var platformFee = new Money(decimal.Round(fare.Amount * feeRate, 2, MidpointRounding.ToEven), fare.Currency);
         var payout = fare - platformFee;
@@ -60,9 +68,19 @@ public sealed class Payment : AuditableEntity
             Amount = fare,
             PlatformFee = platformFee,
             DriverPayoutAmount = payout,
-            Provider = PaymentProvider.Mock,
+            Provider = provider,
             Status = PaymentStatus.Pending,
         };
+    }
+
+    public void SetRedirectUrl(string redirectUrl)
+    {
+        if (Status != PaymentStatus.Pending)
+        {
+            throw new InvalidOperationException($"Cannot set a redirect URL on a payment that is {Status}.");
+        }
+
+        RedirectUrl = redirectUrl;
     }
 
     public void MarkSucceeded(string providerReference)
@@ -74,6 +92,7 @@ public sealed class Payment : AuditableEntity
 
         Status = PaymentStatus.Succeeded;
         ProviderReference = providerReference;
+        RedirectUrl = null;
     }
 
     public void MarkFailed()
@@ -84,6 +103,7 @@ public sealed class Payment : AuditableEntity
         }
 
         Status = PaymentStatus.Failed;
+        RedirectUrl = null;
     }
 
     public void MarkRefunded()

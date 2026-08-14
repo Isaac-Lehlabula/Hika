@@ -5,6 +5,13 @@ namespace Hika.Domain.Bookings;
 public enum BookingStatus
 {
     Pending,
+
+    /// <summary>Driver has accepted; the passenger has been sent to complete a redirect-based
+    /// payment (Ozow) and Ozow hasn't confirmed it yet. Skipped entirely for gateways that
+    /// settle synchronously (MockPaymentGateway) — those go straight from Pending to Confirmed,
+    /// same as before this status existed. See PaymentService.CompletePaymentAsync.</summary>
+    AwaitingPayment,
+
     Confirmed,
     Declined,
     Cancelled,
@@ -87,6 +94,10 @@ public sealed class Booking : AuditableEntity
         return booking;
     }
 
+    /// <summary>Always lands on AwaitingPayment, never directly on Confirmed — whether that
+    /// resolves in the same request (a synchronously-settling gateway) or minutes later (a
+    /// redirect-based one) is an application-layer concern this entity doesn't need to know
+    /// about. See ConfirmPayment/FailPayment.</summary>
     public void Accept()
     {
         if (Status != BookingStatus.Pending)
@@ -94,8 +105,32 @@ public sealed class Booking : AuditableEntity
             throw new InvalidOperationException($"Cannot accept a booking that is {Status}.");
         }
 
-        Status = BookingStatus.Confirmed;
+        Status = BookingStatus.AwaitingPayment;
         RespondedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void ConfirmPayment()
+    {
+        if (Status != BookingStatus.AwaitingPayment)
+        {
+            throw new InvalidOperationException($"Cannot confirm payment for a booking that is {Status}.");
+        }
+
+        Status = BookingStatus.Confirmed;
+    }
+
+    /// <summary>Lands on Declined, not a dedicated status — from the passenger's perspective
+    /// "the driver accepted but payment didn't go through" and "the driver declined" both mean
+    /// the same thing: this booking isn't happening, seats are released. See
+    /// BookingService.CompletePaymentAsync for the seat-release that accompanies this.</summary>
+    public void FailPayment()
+    {
+        if (Status != BookingStatus.AwaitingPayment)
+        {
+            throw new InvalidOperationException($"Cannot fail payment for a booking that is {Status}.");
+        }
+
+        Status = BookingStatus.Declined;
     }
 
     public void Decline()
@@ -111,7 +146,7 @@ public sealed class Booking : AuditableEntity
 
     public void Cancel(string? reason)
     {
-        if (Status is not (BookingStatus.Pending or BookingStatus.Confirmed))
+        if (Status is not (BookingStatus.Pending or BookingStatus.AwaitingPayment or BookingStatus.Confirmed))
         {
             throw new InvalidOperationException($"Cannot cancel a booking that is {Status}.");
         }

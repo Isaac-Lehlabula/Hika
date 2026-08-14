@@ -148,17 +148,67 @@ public sealed class BookingService(IAppDbContext db, IPaymentService paymentServ
 
         booking.Accept();
 
-        // Payment capture happens here, not at request time, since a Pending booking might
-        // still be declined — see docs/domain-model.md §6 and Payment.cs. Added to the same
-        // unit of work as the Accept status change so both save atomically below.
-        await paymentService.CapturePaymentAsync(booking.Id, booking.TotalPrice, cancellationToken);
-
         await notificationDispatcher.DispatchAsync(
-            booking.PassengerUserId, NotificationType.BookingAccepted, "Your booking request was accepted!", booking.Id, cancellationToken);
-        await notificationDispatcher.DispatchAsync(
-            booking.PassengerUserId, NotificationType.PaymentSucceeded, "Your payment was processed successfully.", booking.Id, cancellationToken);
+            booking.PassengerUserId,
+            NotificationType.BookingAccepted,
+            "Your booking request was accepted! Complete payment to confirm your seat.",
+            booking.Id,
+            cancellationToken);
 
-        await db.SaveChangesAsync(cancellationToken);
+        // Added to the same unit of work as the Accept status change. If the gateway settles
+        // synchronously (Mock), the booking is confirmed and everything saves together below,
+        // same as before AwaitingPayment/Ozow existed. If it doesn't (Ozow), the booking stays
+        // AwaitingPayment and this saves just the Accept + a Pending Payment — the passenger
+        // completes payment externally and OzowWebhooksController resolves it later via
+        // ResolvePaymentOutcomeAsync.
+        var paymentOutcome = await paymentService.InitiatePaymentAsync(booking.Id, booking.TotalPrice, cancellationToken);
+
+        if (paymentOutcome.IsPending)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            return await BuildResponseAsync(booking.Id, cancellationToken)
+                ?? throw new InvalidOperationException("Booking disappeared mid-update.");
+        }
+
+        return await ResolvePaymentOutcomeAsync(booking.Id, paymentOutcome.Succeeded, providerReference: null, cancellationToken);
+    }
+
+    public async Task<BookingResponse> ResolvePaymentOutcomeAsync(
+        Guid bookingId, bool succeeded, string? providerReference, CancellationToken cancellationToken)
+    {
+        var booking = await db.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken)
+            ?? throw new NotFoundException(nameof(Booking), bookingId);
+
+        if (booking.Status != BookingStatus.AwaitingPayment)
+        {
+            return await BuildResponseAsync(booking.Id, cancellationToken)
+                ?? throw new InvalidOperationException("Booking disappeared mid-update.");
+        }
+
+        // A no-op when this booking's Payment was already resolved inline by
+        // InitiatePaymentAsync (the Mock/synchronous path calling this straight from
+        // AcceptAsync) — PaymentService.ResolvePaymentAsync guards on Payment.Status itself
+        // already being non-Pending. For the Ozow/webhook path this is the actual resolution.
+        await paymentService.ResolvePaymentAsync(bookingId, succeeded, providerReference, cancellationToken);
+
+        if (succeeded)
+        {
+            booking.ConfirmPayment();
+            await notificationDispatcher.DispatchAsync(
+                booking.PassengerUserId, NotificationType.PaymentSucceeded, "Your payment was processed successfully.", booking.Id, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            booking.FailPayment();
+            await notificationDispatcher.DispatchAsync(
+                booking.PassengerUserId,
+                NotificationType.BookingDeclined,
+                "Your payment could not be completed, so this booking was declined.",
+                booking.Id,
+                cancellationToken);
+            await ReleaseSeatsAsync(booking.TripId, booking.Id, booking.SeatsRequested, cancellationToken);
+        }
 
         return await BuildResponseAsync(booking.Id, cancellationToken)
             ?? throw new InvalidOperationException("Booking disappeared mid-update.");
