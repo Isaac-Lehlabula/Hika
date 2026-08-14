@@ -63,8 +63,9 @@ void main() {
     expect(booking.respondedAtUtc, isNull);
   });
 
-  test('canCancel is true for Pending and Confirmed, false otherwise', () {
+  test('canCancel is true for Pending, AwaitingPayment, and Confirmed, false otherwise', () {
     expect(Booking.fromJson(_bookingJson(status: 'Pending')).canCancel, isTrue);
+    expect(Booking.fromJson(_bookingJson(status: 'AwaitingPayment')).canCancel, isTrue);
     expect(Booking.fromJson(_bookingJson(status: 'Confirmed')).canCancel, isTrue);
     expect(Booking.fromJson(_bookingJson(status: 'Declined')).canCancel, isFalse);
     expect(Booking.fromJson(_bookingJson(status: 'Cancelled')).canCancel, isFalse);

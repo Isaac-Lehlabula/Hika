@@ -56,12 +56,19 @@ extension VerificationStatusBadge on String {
     };
   }
 
-  /// Maps a backend TripStatus string ("Scheduled"/"InProgress"/"Completed"/"Cancelled") to a badge.
+  /// Maps a backend TripStatus/BookingStatus string to a badge. Covers both — TripStatus
+  /// ("Scheduled"/"InProgress"/"Completed"/"Cancelled") and BookingStatus ("Pending"/
+  /// "AwaitingPayment"/"Confirmed"/"Declined"/"Cancelled"/"Completed") — since both are shown
+  /// through the same status-pill UI.
   HikaBadge toTripStatusBadge() {
     return switch (this) {
       'InProgress' => const HikaBadge(label: 'In progress', tone: HikaBadgeTone.warning, icon: Icons.directions_car_filled_rounded),
+      'AwaitingPayment' => const HikaBadge(label: 'Awaiting payment', tone: HikaBadgeTone.warning, icon: Icons.payments_outlined),
+      'Confirmed' => const HikaBadge(label: 'Confirmed', tone: HikaBadgeTone.success, icon: Icons.check_circle_rounded),
+      'Declined' => const HikaBadge(label: 'Declined', tone: HikaBadgeTone.danger, icon: Icons.cancel_rounded),
       'Completed' => const HikaBadge(label: 'Completed', tone: HikaBadgeTone.success, icon: Icons.check_circle_rounded),
       'Cancelled' => const HikaBadge(label: 'Cancelled', tone: HikaBadgeTone.danger, icon: Icons.cancel_rounded),
+      'Pending' => const HikaBadge(label: 'Pending', tone: HikaBadgeTone.neutral, icon: Icons.hourglass_top_rounded),
       _ => const HikaBadge(label: 'Scheduled', tone: HikaBadgeTone.neutral, icon: Icons.schedule_rounded),
     };
   }

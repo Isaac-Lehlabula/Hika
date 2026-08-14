@@ -10,6 +10,7 @@ class Payment {
     this.providerReference,
     required this.status,
     required this.createdAtUtc,
+    this.redirectUrl,
   });
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
@@ -22,6 +23,7 @@ class Payment {
     providerReference: json['providerReference'] as String?,
     status: json['status'] as String,
     createdAtUtc: DateTime.parse(json['createdAtUtc'] as String),
+    redirectUrl: json['redirectUrl'] as String?,
   );
 
   final String id;
@@ -33,4 +35,7 @@ class Payment {
   final String? providerReference;
   final String status;
   final DateTime createdAtUtc;
+  /// Set only while status is Pending and the provider is redirect-based (Ozow) — the hosted
+  /// payment page the passenger needs to open to complete payment.
+  final String? redirectUrl;
 }

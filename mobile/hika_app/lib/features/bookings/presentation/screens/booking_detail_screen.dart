@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/networking/api_exception.dart';
 import '../../../../core/theme/hika_colors.dart';
@@ -25,9 +26,31 @@ class BookingDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<BookingDetailScreen> createState() => _BookingDetailScreenState();
 }
 
-class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
+class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> with WidgetsBindingObserver {
   bool _isCancelling = false;
   bool _hasReviewed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // The passenger completes Ozow payment in an external browser, then returns to the app —
+    // refresh here so the AwaitingPayment/Pending state clears without a manual pull-to-refresh.
+    if (state == AppLifecycleState.resumed) {
+      ref.read(bookingDetailControllerProvider(widget.bookingId).notifier).refresh();
+      ref.read(paymentControllerProvider(widget.bookingId).notifier).refresh();
+    }
+  }
 
   Future<void> _leaveReview(Booking booking, bool isDriver) async {
     final revieweeLabel = isDriver ? booking.passenger.firstName : booking.trip.driver.firstName;
@@ -114,6 +137,13 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                   const SizedBox(height: HikaSpacing.sm),
                   Text(
                     'Waiting for the driver to approve your request.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: HikaColors.warning),
+                  ),
+                ],
+                if (booking.status == 'AwaitingPayment') ...[
+                  const SizedBox(height: HikaSpacing.sm),
+                  Text(
+                    'The driver accepted your request — complete payment to confirm your seats.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: HikaColors.warning),
                   ),
                 ],
@@ -288,11 +318,27 @@ class _PaymentCard extends ConsumerWidget {
                 const SizedBox(height: HikaSpacing.sm),
                 _Row(icon: Icons.receipt_long_outlined, label: 'Reference', value: payment.providerReference!),
               ],
+              if (payment.status == 'Pending' && payment.redirectUrl != null) ...[
+                const SizedBox(height: HikaSpacing.md),
+                HikaButton(
+                  label: 'Pay now',
+                  icon: Icons.open_in_new_rounded,
+                  onPressed: () => _openPaymentUrl(context, payment.redirectUrl!),
+                ),
+              ],
             ],
           ),
         );
       },
     );
+  }
+
+  Future<void> _openPaymentUrl(BuildContext context, String redirectUrl) async {
+    final uri = Uri.parse(redirectUrl);
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Couldn't open the payment page.")));
+    }
   }
 
   Widget _paymentStatusBadge(String status) => switch (status) {

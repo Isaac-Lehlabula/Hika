@@ -105,7 +105,7 @@ class Booking {
   final DateTime? cancelledAtUtc;
   final String? cancellationReason;
 
-  bool get canCancel => status == 'Pending' || status == 'Confirmed';
+  bool get canCancel => status == 'Pending' || status == 'AwaitingPayment' || status == 'Confirmed';
 
   bool get canRespond => status == 'Pending';
 }

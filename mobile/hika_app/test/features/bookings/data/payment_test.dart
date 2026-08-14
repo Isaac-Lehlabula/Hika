@@ -39,4 +39,23 @@ void main() {
     expect(payment.providerReference, isNull);
     expect(payment.status, 'Failed');
   });
+
+  test('Payment.fromJson reads a redirectUrl for a pending Ozow payment', () {
+    final payment = Payment.fromJson({
+      'id': 'pay1',
+      'bookingId': 'b1',
+      'amount': 800,
+      'platformFee': 120,
+      'driverPayoutAmount': 680,
+      'provider': 'Ozow',
+      'providerReference': null,
+      'status': 'Pending',
+      'createdAtUtc': '2026-12-01T10:00:00Z',
+      'redirectUrl': 'https://pay.ozow.com/abc123',
+    });
+
+    expect(payment.provider, 'Ozow');
+    expect(payment.status, 'Pending');
+    expect(payment.redirectUrl, 'https://pay.ozow.com/abc123');
+  });
 }

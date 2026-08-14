@@ -8,14 +8,20 @@ This document flags decisions that need real-world research, legal input, or ven
 - **POPIA (Protection of Personal Information Act)** governs everything here: ID numbers/documents (driver verification), phone numbers, location data, and eventually live-location sharing are all personal information requiring a lawful basis, a privacy policy, data subject access/deletion handling, and breach notification readiness. `docs/security.md`'s PII-minimization approach is a starting point, not a compliance sign-off — a POPIA compliance review is needed before handling real identity documents at scale.
 - **Consumer Protection Act** implications for the cancellation-fee/refund flows (`Payment`/`Refund` in the domain model) — cancellation fee terms need to be clearly disclosed and defensible.
 
-## Payment providers to evaluate (behind the existing `IPaymentGateway` abstraction)
+## Payment provider (implemented: Ozow)
 
-South Africa's card/EFT rails differ from the US/EU providers most payment SDKs assume. Candidates to evaluate when a real gateway is needed:
+**Ozow** — a South African instant-EFT, redirect-based payment gateway — is implemented behind `IPaymentGateway` (`OzowPaymentGateway` in `Hika.Infrastructure/Payments/Ozow`). Unlike the `MockPaymentGateway` it replaces, Ozow never settles synchronously: `InitiatePaymentAsync` posts a signed request to Ozow's API and returns a hosted-payment-page `RedirectUrl`; the actual outcome arrives later via a hash-verified webhook (`OzowWebhooksController`, `POST /api/v1/webhooks/ozow/{payment,refund}-notify`). A new `AwaitingPayment` booking state sits between the driver accepting a request and the booking being `Confirmed`/`Declined`, so a passenger is only ever asked to pay once a driver has actually accepted — see `docs/domain-model.md`/`Booking.cs` for the full state machine.
+
+**Not yet live-verified.** No Ozow sandbox credentials were available while building this — `OzowOptions` (SiteCode/PrivateKey/ApiKey) ship as empty config placeholders, and the app falls back to `MockPaymentGateway` until `Ozow:SiteCode` is set (see `DependencyInjection.cs`). Two things specifically need confirming against a real Ozow merchant account before going live, both flagged in code comments at their call sites:
+- **HashCheck field order** (`OzowPaymentGateway`, `OzowHashHelper`) — the SHA-512-over-concatenated-values algorithm is well-documented, but the *exact* order of fields going into that concatenation was reconstructed from third-party reference implementations, not Ozow's own merchant-portal integration guide.
+- **Refund endpoint path/field names** (`/postrefund`) — Ozow's refund product requires separate merchant enrollment; the request shape here is a best-effort guess.
+
+A mismatch in either fails closed (Ozow rejects the signed request, or our own `OzowNotifyVerifier` rejects an incoming webhook) rather than silently misprocessing a payment — but both should be checked against Merchant Admin → Integration on ozow.com once real credentials exist.
+
+Other SA providers considered but not built (kept here for reference if Ozow needs to be swapped or supplemented later, e.g. for card payments):
 - **PayFast** — widely used by SA SMEs/marketplaces, supports card + EFT + several local wallets, has a marketplace/split-payment style API that could map well to "fare → platform fee + driver payout."
 - **Yoco** — strong SA card acquiring, more POS/card-present focused historically but has online APIs.
 - **Peach Payments** — SA-focused, marketplace/platform payment support, multiple local payment methods.
-- **Ozow** — instant EFT, popular for bank-transfer-preferring users (relevant given not all users will have cards).
-- Evaluate on: marketplace/split-payment support (fare vs. platform fee vs. driver payout), payout-to-bank-account capability for drivers, KYC requirements the platform itself must satisfy to move money, pricing, and PCI-DSS scope reduction (hosted fields/redirect vs. handling card data directly — strongly prefer never touching raw card data).
 
 ## Identity/document verification providers to evaluate (behind the existing `Verification` entity + admin review queue)
 

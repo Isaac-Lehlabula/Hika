@@ -50,4 +50,24 @@ void main() {
     expect(find.text('Completed'), findsOneWidget);
     expect(find.text('Cancelled'), findsOneWidget);
   });
+
+  testWidgets('toTripStatusBadge maps each backend BookingStatus to the right label', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        Column(
+          children: [
+            'Pending'.toTripStatusBadge(),
+            'AwaitingPayment'.toTripStatusBadge(),
+            'Confirmed'.toTripStatusBadge(),
+            'Declined'.toTripStatusBadge(),
+          ],
+        ),
+      ),
+    );
+
+    expect(find.text('Pending'), findsOneWidget);
+    expect(find.text('Awaiting payment'), findsOneWidget);
+    expect(find.text('Confirmed'), findsOneWidget);
+    expect(find.text('Declined'), findsOneWidget);
+  });
 }
