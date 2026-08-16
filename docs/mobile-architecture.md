@@ -2,7 +2,7 @@
 
 ## 1. Why Flutter
 
-Hika's primary and most-tested use case — a South African on a mid-range Android phone, often on constrained mobile data, planning a trip home for the holidays — is squarely a native-app scenario, not a mobile-web one: it benefits from platform-native performance, push notifications, background-friendly behavior, and an install-and-return usage pattern (search once, get notified when a matching trip appears, come back to book). A single Flutter codebase targeting both Android and iOS is the right trade-off for a small team building a real product: one codebase, one release cadence, near-native performance (Flutter compiles to native ARM code, not a WebView), and a rendering engine that gives full control over the "premium, warm, trustworthy" visual identity the product needs rather than inheriting a platform's default look. React Native was the other realistic candidate; Flutter's edge here is a single language+framework for UI and logic (Dart, no JS bridge), a more consistent cross-platform rendering story (Skia/Impeller draws its own pixels rather than mapping to native widgets, so Android/iOS visual parity is easier to guarantee), and a mature, cohesive tooling story (one package manager, one test framework, one build system).
+Hiking Spot's primary and most-tested use case — a South African on a mid-range Android phone, often on constrained mobile data, planning a trip home for the holidays — is squarely a native-app scenario, not a mobile-web one: it benefits from platform-native performance, push notifications, background-friendly behavior, and an install-and-return usage pattern (search once, get notified when a matching trip appears, come back to book). A single Flutter codebase targeting both Android and iOS is the right trade-off for a small team building a real product: one codebase, one release cadence, near-native performance (Flutter compiles to native ARM code, not a WebView), and a rendering engine that gives full control over the "premium, warm, trustworthy" visual identity the product needs rather than inheriting a platform's default look. React Native was the other realistic candidate; Flutter's edge here is a single language+framework for UI and logic (Dart, no JS bridge), a more consistent cross-platform rendering story (Skia/Impeller draws its own pixels rather than mapping to native widgets, so Android/iOS visual parity is easier to guarantee), and a mature, cohesive tooling story (one package manager, one test framework, one build system).
 
 ## 2. State management: Riverpod
 
@@ -22,7 +22,7 @@ Feature-based, not layer-based-at-the-top — a layer-first structure (`lib/scre
 mobile/hika_app/
   lib/
     core/                    App-wide, not feature-specific
-      theme/                  Hika design system (colors, type scale, spacing, component themes)
+      theme/                  Hiking Spot design system (colors, type scale, spacing, component themes)
       networking/               Dio client, interceptors (auth header, retry, error mapping)
       routing/                    go_router configuration
       storage/                    Secure token storage wrapper
@@ -67,8 +67,8 @@ Access and refresh tokens are stored via `flutter_secure_storage` (Android Keyst
 
 ## 6. Design system
 
-A small, centralized Hika theme (`lib/core/theme/`) rather than styling values scattered through widgets:
-- **Typography scale**: a handful of named text styles (display, headline, title, body, caption) built on Material 3's type system but with Hika's chosen typeface and weights — not the Material default.
+A small, centralized Hiking Spot theme (`lib/core/theme/`) rather than styling values scattered through widgets:
+- **Typography scale**: a handful of named text styles (display, headline, title, body, caption) built on Material 3's type system but with Hiking Spot's chosen typeface and weights — not the Material default.
 - **Color**: a semantic palette (primary, surface, success, warning, danger, muted text) defined once and referenced everywhere, warm and South-African-feeling rather than a generic blue SaaS palette — exact values are a design decision made when the theme file is built, not hardcoded ad hoc per screen.
 - **Spacing/radius**: an 4/8pt-based spacing scale and a small set of corner-radius tokens (cards, buttons, sheets) for visual consistency.
 - **Components**: shared `HikaButton`, `HikaCard`, `HikaTextField`, `HikaChip`, `HikaBadge` (for verification/rating badges), loading-skeleton and empty-state widgets — built once in `shared/widgets/`, themed centrally, used everywhere instead of one-off `Container`/`ElevatedButton` styling per screen.

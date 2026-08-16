@@ -200,7 +200,7 @@ public sealed class AuthService(
         await db.SaveChangesAsync(cancellationToken);
 
         await smsSender.SendAsync(
-            phoneNumber, $"Your Hika verification code is {rawCode}. It expires in 10 minutes.", cancellationToken);
+            phoneNumber, $"Your Hiking Spot verification code is {rawCode}. It expires in 10 minutes.", cancellationToken);
     }
 
     public async Task VerifyPhoneAsync(Guid userId, string code, CancellationToken cancellationToken)
@@ -247,7 +247,7 @@ public sealed class AuthService(
         var link = $"{notificationLinks.Value.BaseUrl}/reset-password?userId={account.UserId}&token={Uri.EscapeDataString(rawToken)}";
         await emailSender.SendAsync(
             account.Email,
-            "Reset your Hika password",
+            "Reset your Hiking Spot password",
             $"<p>Click the link below to reset your password. This link expires in 1 hour.</p><p><a href=\"{link}\">{link}</a></p>",
             cancellationToken);
     }
@@ -318,8 +318,8 @@ public sealed class AuthService(
         var link = $"{notificationLinks.Value.BaseUrl}/verify-email?userId={userId}&token={Uri.EscapeDataString(rawToken)}";
         await emailSender.SendAsync(
             email,
-            "Verify your Hika email address",
-            $"<p>Welcome to Hika! Click the link below to verify your email. This link expires in 24 hours.</p><p><a href=\"{link}\">{link}</a></p>",
+            "Verify your Hiking Spot email address",
+            $"<p>Welcome to Hiking Spot! Click the link below to verify your email. This link expires in 24 hours.</p><p><a href=\"{link}\">{link}</a></p>",
             cancellationToken);
     }
 }

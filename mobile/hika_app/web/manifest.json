@@ -1,11 +1,11 @@
 {
-    "name": "hika_app",
-    "short_name": "hika_app",
+    "name": "Hiking Spot",
+    "short_name": "Hiking Spot",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Find your hike home.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

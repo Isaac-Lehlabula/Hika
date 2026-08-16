@@ -23,7 +23,7 @@ export function Sidebar() {
     <nav className="flex h-full w-56 shrink-0 flex-col gap-1 border-r border-border bg-surface px-3 py-4">
       <div className="mb-4 flex items-center gap-2 px-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">H</div>
-        <span className="text-sm font-semibold">Hika Admin</span>
+        <span className="text-sm font-semibold">Hiking Spot Admin</span>
       </div>
       {NAV_ITEMS.map((item) => {
         const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);

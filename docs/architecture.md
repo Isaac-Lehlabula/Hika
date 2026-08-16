@@ -2,9 +2,9 @@
 
 ## 1. Product framing
 
-Hika is **not** an on-demand ride-hailing app. A driver who is already making a trip posts it with available seats; passengers discover trips going their way and reserve seats — potentially for only part of the driver's route. This distinction shapes the domain model more than anything else: the core hard problem is not "match a driver to a passenger" (Uber's problem) but "track seat inventory across the sub-segments of a single journey" (closer to airline/bus segment inventory).
+Hiking Spot is **not** an on-demand ride-hailing app. A driver who is already making a trip posts it with available seats; passengers discover trips going their way and reserve seats — potentially for only part of the driver's route. This distinction shapes the domain model more than anything else: the core hard problem is not "match a driver to a passenger" (Uber's problem) but "track seat inventory across the sub-segments of a single journey" (closer to airline/bus segment inventory).
 
-The **primary customer-facing product is a Flutter mobile app** (Android + iOS) — most South African users will reach Hika from a phone, and the product should feel like a native consumer app, not a mobile-rendered website. A Next.js **admin/operations portal** (internal staff only — verification review, dispute handling, analytics) is a separate, secondary application built later, once the mobile app's core flows work end-to-end. See [`mobile-architecture.md`](mobile-architecture.md) for the Flutter app's design.
+The **primary customer-facing product is a Flutter mobile app** (Android + iOS) — most South African users will reach Hiking Spot from a phone, and the product should feel like a native consumer app, not a mobile-rendered website. A Next.js **admin/operations portal** (internal staff only — verification review, dispute handling, analytics) is a separate, secondary application built later, once the mobile app's core flows work end-to-end. See [`mobile-architecture.md`](mobile-architecture.md) for the Flutter app's design.
 
 ## 2. High-level system
 

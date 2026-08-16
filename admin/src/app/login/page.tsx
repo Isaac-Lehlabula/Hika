@@ -8,7 +8,7 @@ export default function LoginPage() {
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-lg font-bold text-white">
             H
           </div>
-          <h1 className="text-lg font-semibold">Hika Admin</h1>
+          <h1 className="text-lg font-semibold">Hiking Spot Admin</h1>
           <p className="mt-1 text-sm text-text-secondary">Staff sign-in</p>
         </div>
         <LoginForm />

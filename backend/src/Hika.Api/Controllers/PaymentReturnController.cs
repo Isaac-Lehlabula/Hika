@@ -10,7 +10,7 @@ namespace Hika.Api.Controllers;
 /// were never logged into this page, just redirected through it), and the actual booking/payment
 /// state change already happened server-to-server via OzowWebhooksController by the time — or
 /// shortly after — this page loads. This page only tells the passenger what happened and to
-/// switch back to the Hika app, where BookingDetailScreen refreshes on resume.
+/// switch back to the Hiking Spot app, where BookingDetailScreen refreshes on resume.
 /// </summary>
 [ApiController]
 [Route("payment-return")]
@@ -23,7 +23,7 @@ public sealed class PaymentReturnController : ControllerBase
         tone: "success",
         icon: "&#10003;",
         heading: "You're all set",
-        message: "Your payment went through and your seats are confirmed. You can close this page and return to the Hika app.");
+        message: "Your payment went through and your seats are confirmed. You can close this page and return to the Hiking Spot app.");
 
     [HttpGet("cancel")]
     public ContentResult Cancel() => Page(
@@ -31,7 +31,7 @@ public sealed class PaymentReturnController : ControllerBase
         tone: "neutral",
         icon: "&#10005;",
         heading: "Payment cancelled",
-        message: "You cancelled the payment, so your seats haven't been confirmed yet. Return to the Hika app to try again.");
+        message: "You cancelled the payment, so your seats haven't been confirmed yet. Return to the Hiking Spot app to try again.");
 
     [HttpGet("error")]
     public ContentResult Error() => Page(
@@ -39,7 +39,7 @@ public sealed class PaymentReturnController : ControllerBase
         tone: "danger",
         icon: "!",
         heading: "Something went wrong",
-        message: "We couldn't process that payment, so your seats haven't been confirmed yet. Return to the Hika app to try again.");
+        message: "We couldn't process that payment, so your seats haven't been confirmed yet. Return to the Hiking Spot app to try again.");
 
     private static ContentResult Page(string title, string tone, string icon, string heading, string message)
     {
@@ -56,7 +56,7 @@ public sealed class PaymentReturnController : ControllerBase
             <head>
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <title>{{title}} — Hika</title>
+                <title>{{title}} — Hiking Spot</title>
                 <style>
                     body {
                         margin: 0;

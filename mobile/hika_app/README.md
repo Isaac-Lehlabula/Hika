@@ -1,4 +1,4 @@
-# Hika mobile app (Flutter)
+# Hiking Spot mobile app (Flutter)
 
 The primary customer-facing product — Android + iOS from one codebase. See [`/docs/mobile-architecture.md`](../../docs/mobile-architecture.md) for the full design rationale (Riverpod choice, feature-based structure, design system, token storage).
 

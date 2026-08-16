@@ -16,7 +16,7 @@ class HikaApp extends ConsumerWidget {
     final router = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
-      title: 'Hika',
+      title: 'Hiking Spot',
       debugShowCheckedModeBanner: false,
       theme: HikaTheme.light(),
       darkTheme: HikaTheme.dark(),

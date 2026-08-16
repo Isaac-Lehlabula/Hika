@@ -10,7 +10,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="max-w-sm rounded-2xl border border-border bg-surface p-8 text-center shadow-sm">
           <h1 className="text-lg font-semibold">Not authorized</h1>
           <p className="mt-2 text-sm text-text-secondary">
-            Your account isn&apos;t staff-authorized for the Hika admin portal. Ask an existing admin to grant access.
+            Your account isn&apos;t staff-authorized for the Hiking Spot admin portal. Ask an existing admin to grant access.
           </p>
           <form action={logoutAction} className="mt-6">
             <button type="submit" className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-surface-alt">

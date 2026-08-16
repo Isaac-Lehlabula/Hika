@@ -157,9 +157,9 @@ public sealed class OzowPaymentGateway(
 
     private static string FormatAmount(Money amount) => amount.Amount.ToString("F2", CultureInfo.InvariantCulture);
 
-    /// <summary>"HIKA" + the first 8 hex chars of the booking id — short enough to fit a bank
+    /// <summary>"HKSPT" + the first 7 hex chars of the booking id — short enough to fit a bank
     /// statement reference field and stable/derivable without an extra stored column.</summary>
-    private static string BuildBankReference(Guid bookingId) => $"HIKA{bookingId:N}"[..12].ToUpperInvariant();
+    private static string BuildBankReference(Guid bookingId) => $"HKSPT{bookingId:N}"[..12].ToUpperInvariant();
 
     /// <summary>Same pattern as LocalFileStorage.ResolveBaseUrl — prefers the current request's
     /// own scheme+host (correct for whichever client actually called us) over the configured

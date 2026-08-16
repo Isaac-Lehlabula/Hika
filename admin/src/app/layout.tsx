@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hika Admin",
-  description: "Internal admin portal for the Hika carpooling platform.",
+  title: "Hiking Spot Admin",
+  description: "Internal admin portal for the Hiking Spot carpooling platform.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

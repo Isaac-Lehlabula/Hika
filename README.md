@@ -1,8 +1,8 @@
-# Hika
+# Hiking Spot
 
 **Find your hike home.**
 
-Hika is a South African long-distance carpooling platform built around the local concept of "hiking" — getting a lift with someone already travelling in your direction. It is not an on-demand ride-hailing app: drivers post trips they are already making (typically for holidays, long weekends, and other high-travel periods), and passengers reserve seats on those trips, including on partial segments of a longer route.
+Hiking Spot is a South African long-distance carpooling platform built around the local concept of "hiking" — getting a lift with someone already travelling in your direction. It is not an on-demand ride-hailing app: drivers post trips they are already making (typically for holidays, long weekends, and other high-travel periods), and passengers reserve seats on those trips, including on partial segments of a longer route.
 
 The primary product is a **Flutter mobile app** (Android + iOS), with a Next.js admin/operations portal for internal staff.
 

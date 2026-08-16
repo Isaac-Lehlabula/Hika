@@ -1,4 +1,4 @@
-# Hika API (backend)
+# Hiking Spot API (backend)
 
 ASP.NET Core (.NET 10) Web API, modular monolith. See [`/docs/architecture.md`](../docs/architecture.md) for the full design rationale.
 

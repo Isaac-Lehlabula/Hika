@@ -1,6 +1,6 @@
-# Hika Admin
+# Hiking Spot Admin
 
-Internal staff portal for the Hika carpooling platform — Next.js 16 (App Router) + TypeScript + Tailwind CSS v4, server-rendered throughout. See `docs/admin-portal.md` at the repo root for the full design writeup.
+Internal staff portal for the Hiking Spot carpooling platform — Next.js 16 (App Router) + TypeScript + Tailwind CSS v4, server-rendered throughout. See `docs/admin-portal.md` at the repo root for the full design writeup.
 
 ## Running locally
 
