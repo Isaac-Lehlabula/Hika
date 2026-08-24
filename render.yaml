@@ -1,0 +1,55 @@
+databases:
+  - name: hiking-spot-db
+    plan: free
+    databaseName: hiking_spot
+    user: hiking_spot
+
+services:
+  - type: web
+    name: hiking-spot-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: PGHOST
+        fromDatabase:
+          name: hiking-spot-db
+          property: host
+      - key: PGPORT
+        fromDatabase:
+          name: hiking-spot-db
+          property: port
+      - key: PGDATABASE
+        fromDatabase:
+          name: hiking-spot-db
+          property: database
+      - key: PGUSER
+        fromDatabase:
+          name: hiking-spot-db
+          property: user
+      - key: PGPASSWORD
+        fromDatabase:
+          name: hiking-spot-db
+          property: password
+      - key: Jwt__SigningKey
+        generateValue: true
+      - key: Jwt__Issuer
+        value: hika-api
+      - key: Jwt__Audience
+        value: hika-client
+      # Set to the deployed admin portal's origin (e.g. https://your-app.vercel.app) once it
+      # exists — until then the admin portal can't call this API from a browser.
+      - key: Cors__AllowedOrigins__0
+        value: ""
+      # Set to an already-registered account's email to promote it to admin on next deploy —
+      # see Program.cs's remarks. Leave blank until you've registered that account.
+      - key: Admin__BootstrapEmail
+        sync: false
+      # Left blank: no real SMTP provider configured yet, so verification/reset emails won't
+      # send until this points at one (see docs/south-africa.md for candidates).
+      - key: Smtp__Host
+        value: ""

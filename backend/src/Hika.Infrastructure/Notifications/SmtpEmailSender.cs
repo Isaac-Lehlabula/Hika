@@ -22,6 +22,10 @@ public sealed class SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpE
 
         using var client = new SmtpClient();
 
+        // Best-effort: an unreachable/misconfigured relay (or, before one is set up at all, an
+        // empty Smtp:Host) must not fail the request that triggered the email — registering an
+        // account, requesting a password reset — since none of those are contingent on the email
+        // actually arriving. Logged as an error so it's still visible/alertable, just not fatal.
         try
         {
             var socketOptions = smtp.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTlsWhenAvailable;
@@ -33,6 +37,11 @@ public sealed class SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpE
             }
 
             await client.SendAsync(message, cancellationToken);
+            logger.LogInformation("Sent email {Subject} to {ToEmail}", subject, toEmail);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Failed to send email {Subject} to {ToEmail}", subject, toEmail);
         }
         finally
         {
@@ -41,7 +50,5 @@ public sealed class SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpE
                 await client.DisconnectAsync(true, cancellationToken);
             }
         }
-
-        logger.LogInformation("Sent email {Subject} to {ToEmail}", subject, toEmail);
     }
 }

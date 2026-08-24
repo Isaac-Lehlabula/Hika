@@ -11,6 +11,7 @@ using Hika.Infrastructure.Security;
 using Hika.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
@@ -25,6 +26,18 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+
+    // Managed-Postgres hosts (Render, Railway, ...) hand out connection details as separate
+    // libpq-style env vars rather than a single ADO connection string. Bridge the two so
+    // ConnectionStrings:Default is always what Npgsql expects, regardless of which the host gave us.
+    if (string.IsNullOrEmpty(builder.Configuration.GetConnectionString("Default"))
+        && !string.IsNullOrEmpty(builder.Configuration["PGHOST"]))
+    {
+        var pgPort = builder.Configuration["PGPORT"] ?? "5432";
+        builder.Configuration["ConnectionStrings:Default"] =
+            $"Host={builder.Configuration["PGHOST"]};Port={pgPort};Database={builder.Configuration["PGDATABASE"]};" +
+            $"Username={builder.Configuration["PGUSER"]};Password={builder.Configuration["PGPASSWORD"]}";
+    }
 
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
@@ -95,6 +108,20 @@ try
 
     builder.Services.AddHttpContextAccessor();
 
+    // Render (and similar hosts) terminate TLS at their edge and forward plain HTTP to the
+    // container, so without this every request looks like http:// to the app — breaking HTTPS
+    // redirection and any URL the app generates (uploaded-file links, Ozow return URLs) — and
+    // per-IP rate limiting would key off the proxy's address instead of the real client.
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        // The container has no direct public route — Render's proxy is the only thing that can
+        // reach it — so there's no fixed proxy IP to allowlist and trusting the header here
+        // doesn't open a new spoofing surface.
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+
     builder.Services.AddHikaRateLimiting(builder.Configuration);
 
     builder.Services.AddApplication();
@@ -112,6 +139,10 @@ try
             tags: ["ready"]);
 
     var app = builder.Build();
+
+    // Must run before anything that reads Scheme/RemoteIp (request logging, rate limiting,
+    // HTTPS redirection) so they see the real client-facing values, not the proxy's.
+    app.UseForwardedHeaders();
 
     // Request logging goes outermost so its completion log reflects the *final* status code
     // that UseExceptionHandler resolves an exception to, instead of logging its own separate
@@ -155,9 +186,12 @@ try
         Predicate = check => check.Tags.Contains("ready"),
     });
 
-    if (app.Environment.IsDevelopment())
+    // Runs in every environment, not just Development: there's no separate migration job/pipeline
+    // yet, so this is the only thing that ever creates/updates the schema. Each step is idempotent
+    // (MigrateAsync no-ops when up to date; the seed/bootstrap checks below guard on existing state),
+    // so it's safe to run on every startup, including a real deploy.
+    using (var scope = app.Services.CreateScope())
     {
-        using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await db.Database.MigrateAsync();
 
@@ -167,10 +201,10 @@ try
             await db.SaveChangesAsync();
         }
 
-        // Dev-only bootstrap for the admin portal: no self-service "become an admin" endpoint
-        // exists (see UserProfile.GrantAdmin's remarks — a trusted-small-group admin is
-        // promoted out-of-band, never via the API). Set Admin:BootstrapEmail to an already-
-        // registered account's email and restart the API to grant it; unset/blank is a no-op.
+        // No self-service "become an admin" endpoint exists (see UserProfile.GrantAdmin's
+        // remarks — a trusted-small-group admin is promoted out-of-band, never via the API).
+        // Set Admin:BootstrapEmail to an already-registered account's email and restart the API
+        // to grant it; unset/blank is a no-op.
         var bootstrapEmail = app.Configuration["Admin:BootstrapEmail"];
         if (!string.IsNullOrWhiteSpace(bootstrapEmail))
         {
