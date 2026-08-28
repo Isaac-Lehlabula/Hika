@@ -1,5 +1,6 @@
 using Hika.Domain.Admin;
 using Hika.Domain.Bookings;
+using Hika.Domain.Chat;
 using Hika.Domain.Drivers;
 using Hika.Domain.Notifications;
 using Hika.Domain.Payments;
@@ -71,6 +72,10 @@ public interface IAppDbContext
     DbSet<AuditLog> AuditLogs { get; }
 
     DbSet<PlatformFeeSettings> PlatformFeeSettings { get; }
+
+    DbSet<Conversation> Conversations { get; }
+
+    DbSet<ChatMessage> ChatMessages { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 

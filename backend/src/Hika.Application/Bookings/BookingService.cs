@@ -1,4 +1,5 @@
 using Hika.Application.Bookings.Dtos;
+using Hika.Application.Chat;
 using Hika.Application.Common.Exceptions;
 using Hika.Application.Common.Persistence;
 using Hika.Application.Notifications;
@@ -11,7 +12,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Hika.Application.Bookings;
 
-public sealed class BookingService(IAppDbContext db, IPaymentService paymentService, INotificationDispatcher notificationDispatcher)
+public sealed class BookingService(
+    IAppDbContext db, IPaymentService paymentService, INotificationDispatcher notificationDispatcher, IChatService chatService)
     : IBookingService
 {
     public async Task<BookingResponse> RequestAsync(Guid passengerUserId, CreateBookingRequest request, CancellationToken cancellationToken)
@@ -147,6 +149,7 @@ public sealed class BookingService(IAppDbContext db, IPaymentService paymentServ
         var (booking, _) = await LoadOwnedByDriverAsync(driverUserId, bookingId, cancellationToken);
 
         booking.Accept();
+        await chatService.OpenForBookingAsync(booking.Id, cancellationToken);
 
         await notificationDispatcher.DispatchAsync(
             booking.PassengerUserId,
@@ -201,6 +204,7 @@ public sealed class BookingService(IAppDbContext db, IPaymentService paymentServ
         else
         {
             booking.FailPayment();
+            await chatService.CloseForBookingAsync(booking.Id, cancellationToken);
             await notificationDispatcher.DispatchAsync(
                 booking.PassengerUserId,
                 NotificationType.BookingDeclined,
@@ -238,6 +242,7 @@ public sealed class BookingService(IAppDbContext db, IPaymentService paymentServ
         }
 
         booking.Cancel(reason);
+        await chatService.CloseForBookingAsync(booking.Id, cancellationToken);
         await ReleaseSeatsAsync(booking.TripId, booking.Id, booking.SeatsRequested, cancellationToken);
 
         return await BuildResponseAsync(booking.Id, cancellationToken)
@@ -254,6 +259,7 @@ public sealed class BookingService(IAppDbContext db, IPaymentService paymentServ
         }
 
         booking.Complete();
+        await chatService.CloseForBookingAsync(booking.Id, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
 
         return await BuildResponseAsync(booking.Id, cancellationToken)

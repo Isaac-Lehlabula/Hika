@@ -1,6 +1,7 @@
 using Hika.Application.Common.Persistence;
 using Hika.Domain.Admin;
 using Hika.Domain.Bookings;
+using Hika.Domain.Chat;
 using Hika.Domain.Common;
 using Hika.Domain.Drivers;
 using Hika.Domain.Notifications;
@@ -71,6 +72,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     public DbSet<PlatformFeeSettings> PlatformFeeSettings => Set<PlatformFeeSettings>();
+
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken) =>
         Database.BeginTransactionAsync(cancellationToken);

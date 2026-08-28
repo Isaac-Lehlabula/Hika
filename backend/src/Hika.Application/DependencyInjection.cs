@@ -1,6 +1,7 @@
 using FluentValidation;
 using Hika.Application.Admin;
 using Hika.Application.Bookings;
+using Hika.Application.Chat;
 using Hika.Application.Drivers;
 using Hika.Application.Notifications;
 using Hika.Application.Payments;
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<ITripService, TripService>();
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<INotificationDispatcher, NotificationDispatcher>();

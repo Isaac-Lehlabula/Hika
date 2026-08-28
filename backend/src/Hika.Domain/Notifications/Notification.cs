@@ -11,6 +11,7 @@ public enum NotificationType
     PaymentSucceeded,
     NewReview,
     RideAlertMatched,
+    NewChatMessage,
 }
 
 /// <summary>InApp is the only channel actually delivered by this phase — see
