@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/data/auth_api.dart';
 import '../features/auth/presentation/providers/auth_controller.dart';
 import '../features/bookings/data/bookings_api.dart';
+import '../features/bookings/data/chat_api.dart';
 import '../features/bookings/data/payments_api.dart';
 import '../features/drivers/data/drivers_api.dart';
 import '../features/notifications/data/notifications_api.dart';
@@ -39,6 +40,8 @@ final searchApiProvider = Provider<SearchApi>((ref) => SearchApi(ref.watch(apiCl
 final bookingsApiProvider = Provider<BookingsApi>((ref) => BookingsApi(ref.watch(apiClientProvider)));
 
 final paymentsApiProvider = Provider<PaymentsApi>((ref) => PaymentsApi(ref.watch(apiClientProvider)));
+
+final chatApiProvider = Provider<ChatApi>((ref) => ChatApi(ref.watch(apiClientProvider)));
 
 final reviewsApiProvider = Provider<ReviewsApi>((ref) => ReviewsApi(ref.watch(apiClientProvider)));
 

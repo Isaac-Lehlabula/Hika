@@ -9,6 +9,7 @@ import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../features/auth/presentation/screens/verify_phone_screen.dart';
 import '../../features/bookings/presentation/screens/booking_detail_screen.dart';
+import '../../features/bookings/presentation/screens/chat_screen.dart';
 import '../../features/bookings/presentation/screens/reserve_seat_screen.dart';
 import '../../features/bookings/presentation/screens/trip_requests_screen.dart';
 import '../../features/drivers/presentation/screens/add_vehicle_screen.dart';
@@ -91,6 +92,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/bookings/:id',
         builder: (context, state) => BookingDetailScreen(bookingId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/bookings/:id/chat',
+        builder: (context, state) =>
+            ChatScreen(bookingId: state.pathParameters['id']!, otherPartyName: state.extra! as String),
       ),
       GoRoute(
         path: '/users/:id/reviews',

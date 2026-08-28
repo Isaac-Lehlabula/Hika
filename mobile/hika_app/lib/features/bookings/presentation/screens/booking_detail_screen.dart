@@ -154,6 +154,16 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> with 
                 if (booking.status != 'Pending') ...[
                   const SizedBox(height: HikaSpacing.lg),
                   _PaymentCard(bookingId: widget.bookingId),
+                  const SizedBox(height: HikaSpacing.lg),
+                  HikaButton(
+                    label: 'Chat with ${isDriver ? booking.passenger.firstName : booking.trip.driver.firstName}',
+                    variant: HikaButtonVariant.secondary,
+                    icon: Icons.chat_bubble_outline_rounded,
+                    onPressed: () => context.push(
+                      '/bookings/${widget.bookingId}/chat',
+                      extra: isDriver ? booking.passenger.firstName : booking.trip.driver.firstName,
+                    ),
+                  ),
                 ],
                 if (booking.canCancel) ...[
                   const SizedBox(height: HikaSpacing.xl),
