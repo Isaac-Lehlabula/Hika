@@ -9,6 +9,7 @@ import '../../../../shared/widgets/hika_button.dart';
 import '../../../../shared/widgets/hika_card.dart';
 import '../../../../shared/widgets/hika_empty_state.dart';
 import '../../../ride_alerts/presentation/screens/my_ride_alerts_screen.dart';
+import '../../../ride_requests/presentation/screens/ride_requests_screen.dart';
 import '../../data/search_models.dart';
 import '../providers/search_results_controller.dart';
 
@@ -75,16 +76,33 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   return HikaEmptyState(
                     icon: Icons.search_off_rounded,
                     title: 'No hikes found',
-                    message: 'Try a different date, or set an alert and we\'ll notify you the moment a match is posted.',
-                    action: HikaButton(
-                      label: 'Notify me',
-                      icon: Icons.notifications_active_outlined,
-                      onPressed: () => CreateRideAlertSheet.show(
-                        context,
-                        initialOrigin: widget.query.from,
-                        initialDestination: widget.query.to,
-                        initialTravelDate: widget.query.date,
-                      ),
+                    message: 'Post what you need so a driver can claim it directly, or just get notified when a match appears.',
+                    action: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        HikaButton(
+                          label: 'Post a ride request',
+                          icon: Icons.campaign_outlined,
+                          onPressed: () => PostRideRequestSheet.show(
+                            context,
+                            initialOrigin: widget.query.from,
+                            initialDestination: widget.query.to,
+                            initialTravelDate: widget.query.date,
+                          ),
+                        ),
+                        const SizedBox(height: HikaSpacing.sm),
+                        HikaButton(
+                          label: 'Notify me instead',
+                          variant: HikaButtonVariant.text,
+                          icon: Icons.notifications_active_outlined,
+                          onPressed: () => CreateRideAlertSheet.show(
+                            context,
+                            initialOrigin: widget.query.from,
+                            initialDestination: widget.query.to,
+                            initialTravelDate: widget.query.date,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }

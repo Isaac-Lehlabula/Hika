@@ -18,6 +18,9 @@ import '../../features/drivers/presentation/screens/vehicle_detail_screen.dart';
 import '../../features/drivers/presentation/screens/vehicles_screen.dart';
 import '../../features/reviews/presentation/screens/user_reviews_screen.dart';
 import '../../features/ride_alerts/presentation/screens/my_ride_alerts_screen.dart';
+import '../../features/ride_requests/data/ride_request.dart';
+import '../../features/ride_requests/presentation/screens/claim_ride_request_screen.dart';
+import '../../features/ride_requests/presentation/screens/ride_requests_screen.dart';
 import '../../features/search/data/search_models.dart';
 import '../../features/search/presentation/screens/search_results_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
@@ -104,6 +107,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             UserReviewsScreen(userId: state.pathParameters['id']!, displayName: (state.extra as String?) ?? 'Their'),
       ),
       GoRoute(path: '/ride-alerts', builder: (context, state) => const MyRideAlertsScreen()),
+      GoRoute(path: '/ride-requests', builder: (context, state) => const RideRequestsScreen()),
+      GoRoute(
+        path: '/ride-requests/:id/claim',
+        builder: (context, state) => ClaimRideRequestScreen(request: state.extra! as RideRequest),
+      ),
       GoRoute(path: '/blocked-users', builder: (context, state) => const BlockedUsersScreen()),
       GoRoute(path: '/emergency-contacts', builder: (context, state) => const EmergencyContactsScreen()),
     ],

@@ -49,6 +49,11 @@ class InboxScreen extends ConsumerWidget {
         title: const Text('Inbox'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.campaign_outlined),
+            tooltip: 'Ride requests',
+            onPressed: () => context.push('/ride-requests'),
+          ),
+          IconButton(
             icon: const Icon(Icons.notifications_active_outlined),
             tooltip: 'My ride alerts',
             onPressed: () => context.push('/ride-alerts'),

@@ -10,6 +10,7 @@ import '../features/notifications/data/notifications_api.dart';
 import '../features/profile/data/profile_api.dart';
 import '../features/reviews/data/reviews_api.dart';
 import '../features/ride_alerts/data/ride_alerts_api.dart';
+import '../features/ride_requests/data/ride_requests_api.dart';
 import '../features/search/data/search_api.dart';
 import '../features/trips/data/trips_api.dart';
 import '../features/trust_safety/data/trust_safety_api.dart';
@@ -48,5 +49,7 @@ final reviewsApiProvider = Provider<ReviewsApi>((ref) => ReviewsApi(ref.watch(ap
 final notificationsApiProvider = Provider<NotificationsApi>((ref) => NotificationsApi(ref.watch(apiClientProvider)));
 
 final rideAlertsApiProvider = Provider<RideAlertsApi>((ref) => RideAlertsApi(ref.watch(apiClientProvider)));
+
+final rideRequestsApiProvider = Provider<RideRequestsApi>((ref) => RideRequestsApi(ref.watch(apiClientProvider)));
 
 final trustSafetyApiProvider = Provider<TrustSafetyApi>((ref) => TrustSafetyApi(ref.watch(apiClientProvider)));

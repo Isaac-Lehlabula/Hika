@@ -70,4 +70,13 @@ void main() {
     expect(find.text('Confirmed'), findsOneWidget);
     expect(find.text('Declined'), findsOneWidget);
   });
+
+  testWidgets('toTripStatusBadge maps each backend RideRequestStatus to the right label', (tester) async {
+    await tester.pumpWidget(
+      wrap(Column(children: ['Open'.toTripStatusBadge(), 'Claimed'.toTripStatusBadge()])),
+    );
+
+    expect(find.text('Open'), findsOneWidget);
+    expect(find.text('Claimed'), findsOneWidget);
+  });
 }
