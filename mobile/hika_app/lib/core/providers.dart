@@ -6,6 +6,7 @@ import '../features/bookings/data/bookings_api.dart';
 import '../features/bookings/data/chat_api.dart';
 import '../features/bookings/data/payments_api.dart';
 import '../features/drivers/data/drivers_api.dart';
+import '../features/notifications/data/device_tokens_api.dart';
 import '../features/notifications/data/notifications_api.dart';
 import '../features/profile/data/profile_api.dart';
 import '../features/reviews/data/reviews_api.dart';
@@ -47,6 +48,8 @@ final chatApiProvider = Provider<ChatApi>((ref) => ChatApi(ref.watch(apiClientPr
 final reviewsApiProvider = Provider<ReviewsApi>((ref) => ReviewsApi(ref.watch(apiClientProvider)));
 
 final notificationsApiProvider = Provider<NotificationsApi>((ref) => NotificationsApi(ref.watch(apiClientProvider)));
+
+final deviceTokensApiProvider = Provider<DeviceTokensApi>((ref) => DeviceTokensApi(ref.watch(apiClientProvider)));
 
 final rideAlertsApiProvider = Provider<RideAlertsApi>((ref) => RideAlertsApi(ref.watch(apiClientProvider)));
 

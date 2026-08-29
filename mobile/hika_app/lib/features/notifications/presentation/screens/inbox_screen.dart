@@ -10,6 +10,7 @@ import '../../../../shared/widgets/hika_card.dart';
 import '../../../../shared/widgets/hika_empty_state.dart';
 import '../../../profile/presentation/providers/profile_controller.dart';
 import '../../data/notification.dart';
+import '../notification_routing.dart';
 import '../providers/notifications_controller.dart';
 
 /// The Inbox tab — every Notification row for the signed-in user, in-app being the only
@@ -22,21 +23,13 @@ class InboxScreen extends ConsumerWidget {
       ref.read(notificationsControllerProvider.notifier).markRead(notification.id);
     }
 
-    final relatedId = notification.relatedEntityId;
-    if (relatedId == null) {
-      return;
-    }
-
-    switch (notification.type) {
-      case 'BookingRequested' || 'BookingAccepted' || 'BookingDeclined' || 'PaymentSucceeded':
-        context.push('/bookings/$relatedId');
-      case 'RideAlertMatched':
-        context.push('/trips/$relatedId');
-      case 'NewReview':
-        final userId = ref.read(profileControllerProvider).value?.userId;
-        if (userId != null) {
-          context.push('/users/$userId/reviews', extra: 'Your');
-        }
+    final route = notificationRoute(
+      type: notification.type,
+      relatedEntityId: notification.relatedEntityId,
+      currentUserId: ref.read(profileControllerProvider).value?.userId,
+    );
+    if (route != null) {
+      context.push(route.path, extra: route.extra);
     }
   }
 

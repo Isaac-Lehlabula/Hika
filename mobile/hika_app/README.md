@@ -27,6 +27,16 @@ test/             Mirrors lib/ structure
    - Override the API base URL for a physical device or staging: `flutter run --dart-define=API_BASE_URL=http://<your-machine-ip>:5080`
    - `flutter run -d chrome` also works for quick UI iteration in a browser — useful for fast feedback, but the shipped product targets Android/iOS, not web.
 
+## Push notifications
+
+`lib/firebase_options.dart` ships with placeholder values, so `PushService` (see `lib/core/push/push_service.dart`) fails to reach real FCM and silently no-ops — the app runs normally either way, since the in-app inbox is the notification channel this app actually guarantees. To enable real push delivery:
+
+1. Create a Firebase project and register the Android/iOS apps (package name / bundle id must match `android/app/build.gradle.kts` and `ios/Runner.xcodeproj`).
+2. Run `flutterfire configure` from this directory and let it overwrite `lib/firebase_options.dart` with real values (needs the FlutterFire CLI and a login to the Firebase account that owns the project).
+3. Generate a service-account key (Firebase console → Project Settings → Service Accounts) and set its JSON as `Firebase:ServiceAccountJson` in the backend's config — see `backend/src/Hika.Api/appsettings.json` and `FirebaseOptions.cs`.
+
+No native Android/iOS config (no `google-services.json`, no Gradle plugin) is needed for this — `firebase_options.dart` is read entirely on the Dart side, which is also why a placeholder config doesn't break the build.
+
 ## Testing
 
 ```bash
