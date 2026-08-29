@@ -8,6 +8,7 @@ using Hika.Domain.Notifications;
 using Hika.Domain.Payments;
 using Hika.Domain.Reviews;
 using Hika.Domain.RideAlerts;
+using Hika.Domain.RideRequests;
 using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
@@ -92,6 +93,8 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
     public DbSet<Conversation> Conversations => Set<Conversation>();
 
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+
+    public DbSet<RideRequest> RideRequests => Set<RideRequest>();
 
     // The InMemory provider doesn't support transactions or raw SQL — BookingService.RequestAsync,
     // which needs both for the advisory-locked reservation, is covered by the Postgres
@@ -190,6 +193,8 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
         modelBuilder.Entity<Conversation>().HasKey(c => c.Id);
 
         modelBuilder.Entity<ChatMessage>().HasKey(m => m.Id);
+
+        modelBuilder.Entity<RideRequest>().HasKey(r => r.Id);
 
         // Same client-generated-key convention as production — see AppDbContext for why.
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

@@ -6,6 +6,7 @@ using Hika.Domain.Notifications;
 using Hika.Domain.Payments;
 using Hika.Domain.Reviews;
 using Hika.Domain.RideAlerts;
+using Hika.Domain.RideRequests;
 using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
@@ -76,6 +77,8 @@ public interface IAppDbContext
     DbSet<Conversation> Conversations { get; }
 
     DbSet<ChatMessage> ChatMessages { get; }
+
+    DbSet<RideRequest> RideRequests { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 

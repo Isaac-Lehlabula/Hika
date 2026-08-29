@@ -8,6 +8,7 @@ using Hika.Domain.Notifications;
 using Hika.Domain.Payments;
 using Hika.Domain.Reviews;
 using Hika.Domain.RideAlerts;
+using Hika.Domain.RideRequests;
 using Hika.Domain.Trips;
 using Hika.Domain.TrustSafety;
 using Hika.Domain.Users;
@@ -76,6 +77,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Conversation> Conversations => Set<Conversation>();
 
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+
+    public DbSet<RideRequest> RideRequests => Set<RideRequest>();
 
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken) =>
         Database.BeginTransactionAsync(cancellationToken);
