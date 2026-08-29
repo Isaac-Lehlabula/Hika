@@ -1,8 +1,11 @@
 using Hika.Application.Notifications;
+using Hika.Application.Notifications.Ports;
 using Hika.Application.Reviews;
 using Hika.Domain.Reviews;
 using Hika.Domain.Users;
 using Hika.UnitTests.TestSupport;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using Shouldly;
 
 namespace Hika.UnitTests.Application.Reviews;
@@ -18,7 +21,8 @@ public class ReviewServiceTests
 
     public ReviewServiceTests()
     {
-        _sut = new ReviewService(_db, new NotificationDispatcher(_db));
+        _sut = new ReviewService(
+            _db, new NotificationDispatcher(_db, Substitute.For<IPushSender>(), Substitute.For<ILogger<NotificationDispatcher>>()));
     }
 
     private async Task<Guid> SeedReviewedUserAsync()

@@ -62,6 +62,8 @@ public interface IAppDbContext
 
     DbSet<Notification> Notifications { get; }
 
+    DbSet<DeviceToken> DeviceTokens { get; }
+
     DbSet<RideAlert> RideAlerts { get; }
 
     DbSet<Report> Reports { get; }

@@ -78,6 +78,8 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
 
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+
     public DbSet<RideAlert> RideAlerts => Set<RideAlert>();
 
     public DbSet<Report> Reports => Set<Report>();
@@ -177,6 +179,8 @@ public sealed class InMemoryAppDbContext : DbContext, IAppDbContext
         modelBuilder.Entity<Review>().HasKey(r => r.Id);
 
         modelBuilder.Entity<Notification>().HasKey(n => n.Id);
+
+        modelBuilder.Entity<DeviceToken>().HasKey(t => t.Id);
 
         modelBuilder.Entity<RideAlert>().HasKey(a => a.Id);
 

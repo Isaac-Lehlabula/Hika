@@ -62,6 +62,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+
     public DbSet<RideAlert> RideAlerts => Set<RideAlert>();
 
     public DbSet<Report> Reports => Set<Report>();

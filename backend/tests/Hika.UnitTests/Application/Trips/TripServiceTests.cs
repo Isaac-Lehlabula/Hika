@@ -1,10 +1,13 @@
 using Hika.Application.Common.Exceptions;
 using Hika.Application.Notifications;
+using Hika.Application.Notifications.Ports;
 using Hika.Application.Trips;
 using Hika.Application.Trips.Dtos;
 using Hika.Domain.Common;
 using Hika.Domain.Drivers;
 using Hika.UnitTests.TestSupport;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using Shouldly;
 
 namespace Hika.UnitTests.Application.Trips;
@@ -16,7 +19,8 @@ public class TripServiceTests
 
     public TripServiceTests()
     {
-        _sut = new TripService(_db, new NotificationDispatcher(_db));
+        _sut = new TripService(
+            _db, new NotificationDispatcher(_db, Substitute.For<IPushSender>(), Substitute.For<ILogger<NotificationDispatcher>>()));
     }
 
     private async Task<(Guid DriverId, Guid VehicleId)> SeedDriverWithVehicleAsync(int seatCapacity = 4)

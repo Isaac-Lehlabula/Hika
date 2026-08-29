@@ -1,7 +1,11 @@
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Hika.Application.Common.Events;
 using Hika.Application.Common.Options;
 using Hika.Application.Common.Persistence;
 using Hika.Application.Common.Storage;
+using Hika.Application.Notifications;
+using Hika.Application.Notifications.Ports;
 using Hika.Application.Payments.Ports;
 using Hika.Application.Users.Ports;
 using Hika.Infrastructure.Common.Events;
@@ -89,10 +93,16 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(OzowOptions.SectionName));
         services.AddScoped<OzowNotifyVerifier>();
 
+        // Not .ValidateOnStart() — an empty ServiceAccountJson is the valid "no Firebase project
+        // configured yet" state (see FirebaseOptions), same reasoning as Ozow above.
+        services.AddOptions<FirebaseOptions>()
+            .Bind(configuration.GetSection(FirebaseOptions.SectionName));
+
         services.AddScoped<IUserAccountService, UserAccountService>();
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddScoped<ISmsSender, LoggingSmsSender>();
+        services.AddScoped<IDeviceTokenService, DeviceTokenService>();
 
         // Real Ozow only once real credentials are configured (see OzowOptions) — every
         // deployment without them, including every automated test, keeps getting Mock's
@@ -109,6 +119,28 @@ public static class DependencyInjection
         else
         {
             services.AddScoped<IPaymentGateway, MockPaymentGateway>();
+        }
+
+        // Real Firebase only once a service account is configured (see FirebaseOptions) — every
+        // deployment without one, including every automated test, keeps getting the logging
+        // no-op, unchanged from before Firebase existed. FirebaseApp.Create is registered as a
+        // singleton (the SDK's own recommended lifetime) and only ever constructed inside this
+        // branch, so an empty/placeholder credential never reaches it.
+        var firebaseServiceAccountJson = configuration[$"{FirebaseOptions.SectionName}:{nameof(FirebaseOptions.ServiceAccountJson)}"];
+        if (!string.IsNullOrWhiteSpace(firebaseServiceAccountJson))
+        {
+            services.AddSingleton(sp =>
+            {
+                var json = sp.GetRequiredService<IOptions<FirebaseOptions>>().Value.ServiceAccountJson;
+                // FromJson is SDK-obsolete in favor of a CredentialFactory API this FirebaseAdmin
+                // version doesn't yet expose a documented equivalent for; still fully functional.
+                return FirebaseApp.Create(new AppOptions { Credential = GoogleCredential.FromJson(json) });
+            });
+            services.AddScoped<IPushSender, FirebasePushSender>();
+        }
+        else
+        {
+            services.AddScoped<IPushSender, LoggingPushSender>();
         }
 
         services.AddScoped<IFileStorage, LocalFileStorage>();
