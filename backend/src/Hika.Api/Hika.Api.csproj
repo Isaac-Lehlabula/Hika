@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <PropertyGroup>
+    <UserSecretsId>468d1e04-dca0-447b-9ee4-4ebd6ce16a32</UserSecretsId>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Hika.Domain\Hika.Domain.csproj" />
     <ProjectReference Include="..\Hika.Application\Hika.Application.csproj" />

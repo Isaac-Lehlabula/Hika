@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "254885278658",
+    "project_id": "hiking-spot-f7640",
+    "storage_bucket": "hiking-spot-f7640.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:254885278658:android:9a66be22b162bfabf9dc5b",
+        "android_client_info": {
+          "package_name": "com.hika.hika_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTXfHAwPJY9aWFBU7awvVzcJXG8X8Ylkk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

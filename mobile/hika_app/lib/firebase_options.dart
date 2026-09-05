@@ -36,24 +36,28 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'placeholder-not-configured',
-    appId: '1:000000000000:web:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'hiking-spot-placeholder',
+    apiKey: 'AIzaSyBb0TS2nP9zLkk4-jUtpVESyuHZy4tbUJs',
+    appId: '1:254885278658:web:13a3d624aed5d4acf9dc5b',
+    messagingSenderId: '254885278658',
+    projectId: 'hiking-spot-f7640',
+    authDomain: 'hiking-spot-f7640.firebaseapp.com',
+    storageBucket: 'hiking-spot-f7640.firebasestorage.app',
+    measurementId: 'G-S3QY1XJVH7',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'placeholder-not-configured',
-    appId: '1:000000000000:android:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'hiking-spot-placeholder',
+    apiKey: 'AIzaSyCTXfHAwPJY9aWFBU7awvVzcJXG8X8Ylkk',
+    appId: '1:254885278658:android:9a66be22b162bfabf9dc5b',
+    messagingSenderId: '254885278658',
+    projectId: 'hiking-spot-f7640',
+    storageBucket: 'hiking-spot-f7640.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'placeholder-not-configured',
-    appId: '1:000000000000:ios:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'hiking-spot-placeholder',
+    apiKey: 'AIzaSyD0StLnHWZgoj-Mrd04FhxaocKiL9LytQA',
+    appId: '1:254885278658:ios:fe4ad6e471482bc7f9dc5b',
+    messagingSenderId: '254885278658',
+    projectId: 'hiking-spot-f7640',
+    storageBucket: 'hiking-spot-f7640.firebasestorage.app',
     iosBundleId: 'com.hika.hikaApp',
   );
 }
